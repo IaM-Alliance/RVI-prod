@@ -1,0 +1,339 @@
+import os
+import logging
+from datetime import datetime
+from flask import Flask, render_template, redirect, url_for, flash, request, abort
+from flask_login import LoginManager, current_user, login_user, logout_user, login_required
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.orm import DeclarativeBase
+from werkzeug.middleware.proxy_fix import ProxyFix
+from werkzeug.security import generate_password_hash, check_password_hash
+import secrets
+import string
+
+# Setup logging
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+class Base(DeclarativeBase):
+    pass
+
+db = SQLAlchemy(model_class=Base)
+
+# Create the app
+app = Flask(__name__)
+app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(16))
+app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
+
+# Configure the database
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL", "sqlite:///iam_alliance.db")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+# Initialize the database
+db.init_app(app)
+
+# Initialize login manager
+login_manager = LoginManager()
+login_manager.init_app(app)
+login_manager.login_view = 'login'
+login_manager.login_message_category = 'danger'
+
+# Import models after db initialization
+from models import User, AuditLog, MatrixToken
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
+
+# Import forms
+from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm
+
+from utils import generate_random_password, send_account_notification
+
+# Custom filters
+@app.template_filter('datetime_format')
+def datetime_format(value, format='%Y-%m-%d %H:%M:%S'):
+    if value is None:
+        return ""
+    return value.strftime(format)
+
+# Context processors
+@app.context_processor
+def inject_current_year():
+    return {'current_year': datetime.utcnow().year}
+
+# Create routes
+@app.route('/')
+def index():
+    if not current_user.is_authenticated:
+        return redirect(url_for('login'))
+    
+    if current_user.needs_password_change:
+        flash('Please change your temporary password before continuing.', 'warning')
+        return redirect(url_for('change_password'))
+    
+    if current_user.is_superadmin() or current_user.is_server_admin():
+        return redirect(url_for('admin_dashboard'))
+    else:
+        return redirect(url_for('agent_dashboard'))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if current_user.is_authenticated:
+        return redirect(url_for('index'))
+    
+    form = LoginForm()
+    if form.validate_on_submit():
+        user = User.query.filter_by(username=form.username.data).first()
+        
+        if user and check_password_hash(user.password_hash, form.password.data):
+            login_user(user)
+            
+            # Log the login event
+            log_entry = AuditLog(
+                user_id=user.id,
+                action="login",
+                details=f"User logged in from IP: {request.remote_addr}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            
+            # Update last login time
+            user.last_login = datetime.utcnow()
+            db.session.commit()
+            
+            next_page = request.args.get('next')
+            if not next_page or not next_page.startswith('/'):
+                next_page = url_for('index')
+                
+            return redirect(next_page)
+        else:
+            flash('Invalid username or password', 'danger')
+    
+    return render_template('login.html', form=form)
+
+@app.route('/logout')
+@login_required
+def logout():
+    # Log the logout event
+    log_entry = AuditLog(
+        user_id=current_user.id,
+        action="logout",
+        details=f"User logged out from IP: {request.remote_addr}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(log_entry)
+    db.session.commit()
+    
+    logout_user()
+    flash('You have been logged out.', 'info')
+    return redirect(url_for('login'))
+
+@app.route('/change-password', methods=['GET', 'POST'])
+@login_required
+def change_password():
+    form = ChangePasswordForm()
+    
+    if form.validate_on_submit():
+        if check_password_hash(current_user.password_hash, form.current_password.data):
+            current_user.password_hash = generate_password_hash(form.new_password.data)
+            current_user.needs_password_change = False
+            
+            # Log the password change
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action="password_change",
+                details="User changed their password",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
+            flash('Your password has been updated.', 'success')
+            return redirect(url_for('index'))
+        else:
+            flash('Current password is incorrect.', 'danger')
+    
+    return render_template('change_password.html', form=form)
+
+# Admin Routes
+@app.route('/admin/dashboard')
+@login_required
+def admin_dashboard():
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    user_count = User.query.count()
+    recent_logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(10).all()
+    recent_tokens = MatrixToken.query.order_by(MatrixToken.created_at.desc()).limit(10).all()
+    
+    return render_template('admin/dashboard.html', 
+                          user_count=user_count, 
+                          recent_logs=recent_logs,
+                          recent_tokens=recent_tokens)
+
+@app.route('/admin/register-user', methods=['GET', 'POST'])
+@login_required
+def register_user():
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    form = UserRegistrationForm()
+    
+    if form.validate_on_submit():
+        # Generate a random temporary password
+        temp_password = generate_random_password()
+        
+        # Create the new user
+        new_user = User(
+            username=form.username.data,
+            email=form.email.data,
+            password_hash=generate_password_hash(temp_password),
+            role=form.role.data,
+            needs_password_change=True,
+            created_by=current_user.id
+        )
+        
+        db.session.add(new_user)
+        
+        # Log the user creation
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action="user_created",
+            details=f"Created new user: {form.username.data} with role: {form.role.data}",
+            ip_address=request.remote_addr
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        # Send notifications
+        try:
+            send_account_notification(
+                admin_email=current_user.email,
+                user_email=new_user.email,
+                username=new_user.username,
+                admin_name=current_user.username
+            )
+            flash(f'User {new_user.username} created successfully. Temporary password: {temp_password}', 'success')
+            flash('Notification emails have been sent.', 'info')
+        except Exception as e:
+            logger.error(f"Email notification error: {str(e)}")
+            flash(f'User created, but email notifications failed. Temporary password: {temp_password}', 'warning')
+        
+        return redirect(url_for('user_list'))
+    
+    return render_template('admin/register_user.html', form=form)
+
+@app.route('/admin/users')
+@login_required
+def user_list():
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    users = User.query.all()
+    return render_template('admin/user_list.html', users=users)
+
+@app.route('/admin/audit-log/<int:user_id>')
+@login_required
+def audit_log(user_id):
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    user = User.query.get_or_404(user_id)
+    logs = AuditLog.query.filter_by(user_id=user_id).order_by(AuditLog.timestamp.desc()).all()
+    
+    return render_template('admin/audit_log.html', user=user, logs=logs)
+
+# Agent Routes
+@app.route('/agent/dashboard')
+@login_required
+def agent_dashboard():
+    if current_user.needs_password_change:
+        flash('Please change your temporary password before continuing.', 'warning')
+        return redirect(url_for('change_password'))
+    
+    # Get tokens generated by this user
+    tokens = MatrixToken.query.filter_by(created_by=current_user.id).order_by(MatrixToken.created_at.desc()).all()
+    
+    return render_template('agent/dashboard.html', tokens=tokens)
+
+@app.route('/agent/matrix-form', methods=['GET', 'POST'])
+@login_required
+def matrix_form():
+    if current_user.needs_password_change:
+        flash('Please change your temporary password before continuing.', 'warning')
+        return redirect(url_for('change_password'))
+    
+    form = MatrixRegistrationForm()
+    
+    if form.validate_on_submit():
+        # Generate a unique token
+        token = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
+        
+        # Create token record
+        new_token = MatrixToken(
+            token=token,
+            user_fullname=form.full_name.data,
+            user_email=form.email.data,
+            created_by=current_user.id,
+            status="pending"
+        )
+        
+        db.session.add(new_token)
+        
+        # Log the token generation
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action="token_generated",
+            details=f"Generated Matrix token for: {form.full_name.data} ({form.email.data})",
+            ip_address=request.remote_addr
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        # TODO: Implement the actual POST to Matrix API
+        # This would be implemented in a production environment
+        # For now, we'll just mark it as "submitted" in our database
+        
+        new_token.status = "submitted"
+        db.session.commit()
+        
+        flash('Registration submitted successfully to Matrix API', 'success')
+        return redirect(url_for('agent_dashboard'))
+    
+    return render_template('agent/matrix_form.html', form=form)
+
+# Error handlers
+@app.errorhandler(403)
+def forbidden(e):
+    return render_template('errors/403.html'), 403
+
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('errors/404.html'), 404
+
+@app.errorhandler(500)
+def internal_server_error(e):
+    return render_template('errors/500.html'), 500
+
+# Initialize the database tables
+with app.app_context():
+    db.create_all()
+    
+    # Create superadmin user if not exists
+    superadmin = User.query.filter_by(username='superadmin').first()
+    if not superadmin:
+        initial_password = generate_random_password()
+        superadmin = User(
+            username='superadmin',
+            email='admin@iam-alliance.com',
+            password_hash=generate_password_hash(initial_password),
+            role='superadmin',
+            needs_password_change=True
+        )
+        db.session.add(superadmin)
+        db.session.commit()
+        print(f"Created superadmin user with initial password: {initial_password}")

@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+
+{% block title %}403 Forbidden - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <div class="mt-5 mb-4">
+            <i class="fas fa-lock fa-5x text-warning"></i>
+        </div>
+        <h1 class="display-4">403</h1>
+        <h2 class="mb-4">Access Denied</h2>
+        <p class="lead">You don't have permission to access this page.</p>
+        <p class="text-muted">If you believe this is an error, please contact your system administrator.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

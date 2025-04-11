@@ -1,0 +1,96 @@
+{% extends 'base.html' %}
+
+{% block title %}Audit Log - {{ user.username }} - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('admin_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item"><a href="{{ url_for('user_list') }}">User List</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Audit Log</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-2">Audit Log</h1>
+        <p class="lead">
+            User: <strong>{{ user.username }}</strong> 
+            <span class="badge {% if user.is_superadmin() %}bg-danger{% elif user.is_server_admin() %}bg-warning{% else %}bg-info{% endif %}">
+                {{ user.role|replace('_', ' ')|title }}
+            </span>
+        </p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Activity History</h5>
+            </div>
+            <div class="card-body">
+                {% if logs %}
+                    <div class="table-responsive">
+                        <table class="table table-hover data-table">
+                            <thead>
+                                <tr>
+                                    <th>Timestamp</th>
+                                    <th>Action</th>
+                                    <th>Details</th>
+                                    <th>IP Address</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for log in logs %}
+                                    <tr>
+                                        <td>{{ log.timestamp|datetime_format }}</td>
+                                        <td>
+                                            <span class="badge 
+                                                {% if log.action == 'login' %}bg-success
+                                                {% elif log.action == 'logout' %}bg-warning
+                                                {% elif log.action == 'password_change' %}bg-info
+                                                {% elif log.action == 'user_created' %}bg-primary
+                                                {% elif log.action == 'token_generated' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ log.action|replace('_', ' ')|title }}
+                                            </span>
+                                        </td>
+                                        <td>{{ log.details }}</td>
+                                        <td>{{ log.ip_address }}</td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> No activity records found for this user.
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.data-table').DataTable({
+            "order": [[0, "desc"]], // Sort by timestamp by default
+            "pageLength": 50,
+            "language": {
+                "search": "Search logs:",
+                "emptyTable": "No audit logs found"
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

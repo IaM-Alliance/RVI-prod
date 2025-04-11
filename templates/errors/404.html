@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}404 Not Found - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6 text-center">
+        <div class="mt-5 mb-4">
+            <i class="fas fa-map-signs fa-5x text-info"></i>
+        </div>
+        <h1 class="display-4">404</h1>
+        <h2 class="mb-4">Page Not Found</h2>
+        <p class="lead">The page you are looking for doesn't exist or has been moved.</p>
+        <div class="mt-4">
+            <a href="{{ url_for('index') }}" class="btn btn-primary">Return to Dashboard</a>
+        </div>
+    </div>
+</div>
+{% endblock %}
