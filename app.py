@@ -55,7 +55,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Import forms
-from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingForm
+from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingForm as VettingFormClass
 
 from utils import generate_random_password, send_account_notification
 
@@ -75,6 +75,17 @@ def nl2br(value):
 @app.context_processor
 def inject_current_year():
     return {'current_year': datetime.utcnow().year}
+
+@app.context_processor
+def inject_pending_forms():
+    if current_user.is_authenticated and (current_user.is_superadmin() or current_user.is_server_admin()):
+        try:
+            pending_forms = VettingForm.query.filter_by(status='submitted').count()
+            return {'pending_forms': pending_forms}
+        except:
+            # If the database query fails, don't break the app
+            return {'pending_forms': 0}
+    return {'pending_forms': 0}
 
 # Create routes
 @app.route('/')
@@ -391,7 +402,7 @@ def vetting_form():
         flash('Please change your temporary password before continuing.', 'warning')
         return redirect(url_for('change_password'))
     
-    form = VettingForm()
+    form = VettingFormClass()
     
     if form.validate_on_submit():
         # Create new vetting form record
@@ -455,7 +466,7 @@ def edit_vetting_form(form_id):
         flash('This vetting form has already been processed and cannot be edited.', 'warning')
         return redirect(url_for('agent_dashboard'))
     
-    form = VettingForm(obj=vetting_form_record)
+    form = VettingFormClass(obj=vetting_form_record)
     
     if form.validate_on_submit():
         # Update the form data
