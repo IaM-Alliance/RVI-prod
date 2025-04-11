@@ -1,5 +1,5 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField
+from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField, HiddenField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from models import User
 
@@ -34,6 +34,9 @@ class UserRegistrationForm(FlaskForm):
         ('inviting_admin', 'Inviting Admin'),
         ('server_admin', 'Server Admin')
     ], validators=[DataRequired()])
+    
+    # Status for user registration approval
+    status = HiddenField('Status', default='pending')
     submit = SubmitField('Register User')
     
     def validate_username(self, username):

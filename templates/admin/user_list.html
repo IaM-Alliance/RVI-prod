@@ -10,6 +10,23 @@
     </div>
 </div>
 
+{% if pending_users_count > 0 %}
+<div class="row mb-4">
+    <div class="col">
+        <div class="card bg-warning bg-opacity-25 border-warning shadow">
+            <div class="card-body">
+                <h5 class="card-title text-warning">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Pending Approval
+                </h5>
+                <p class="card-text">
+                    There are <strong>{{ pending_users_count }}</strong> user{% if pending_users_count > 1 %}s{% endif %} awaiting approval. 
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
 <div class="row mb-4">
     <div class="col">
         <div class="card shadow">
@@ -27,6 +44,7 @@
                                 <th>Username</th>
                                 <th>Email</th>
                                 <th>Role</th>
+                                <th>Status</th>
                                 <th>Created</th>
                                 <th>Last Login</th>
                                 <th>Actions</th>
@@ -34,13 +52,22 @@
                         </thead>
                         <tbody>
                             {% for user in users %}
-                                <tr>
+                                <tr class="{% if user.status == 'pending' %}table-warning{% endif %}">
                                     <td>{{ user.username }}</td>
                                     <td>{{ user.email }}</td>
                                     <td>
-                                        <span class="badge {% if user.is_superadmin() %}bg-danger{% elif user.is_server_admin() %}bg-warning{% else %}bg-info{% endif %}">
+                                        <span class="badge {% if user.is_superadmin() %}bg-danger{% elif user.is_server_admin() %}bg-warning{% elif user.is_inviting_admin() %}bg-info{% else %}bg-success{% endif %}">
                                             {{ user.role|replace('_', ' ')|title }}
                                         </span>
+                                    </td>
+                                    <td>
+                                        {% if user.status == 'active' %}
+                                            <span class="badge bg-success">Active</span>
+                                        {% elif user.status == 'pending' %}
+                                            <span class="badge bg-warning">Pending</span>
+                                        {% elif user.status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% endif %}
                                     </td>
                                     <td>{{ user.created_at|datetime_format }}</td>
                                     <td>
@@ -51,6 +78,11 @@
                                         {% endif %}
                                     </td>
                                     <td>
+                                        {% if user.status == 'pending' and (user.created_by != current_user.id) %}
+                                            <a href="{{ url_for('approve_user', user_id=user.id) }}" class="btn btn-sm btn-warning">
+                                                <i class="fas fa-user-check me-1"></i> Review
+                                            </a>
+                                        {% endif %}
                                         <a href="{{ url_for('audit_log', user_id=user.id) }}" class="btn btn-sm btn-outline-primary">
                                             <i class="fas fa-history me-1"></i> Audit Log
                                         </a>
@@ -58,7 +90,7 @@
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="6" class="text-center">No users found</td>
+                                    <td colspan="7" class="text-center">No users found</td>
                                 </tr>
                             {% endfor %}
                         </tbody>

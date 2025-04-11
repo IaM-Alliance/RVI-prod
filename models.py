@@ -13,6 +13,12 @@ class User(UserMixin, db.Model):
     needs_password_change = db.Column(db.Boolean, default=True)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     
+    # User approval fields
+    status = db.Column(db.String(20), nullable=False, default='active')  # active, pending, rejected
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    approved_at = db.Column(db.DateTime)
+    approval_notes = db.Column(db.Text)
+    
     # Relationships
     audit_logs = db.relationship('AuditLog', backref='user', lazy=True)
     tokens = db.relationship('MatrixToken', backref='creator', lazy=True)
