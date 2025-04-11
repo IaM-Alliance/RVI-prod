@@ -78,13 +78,17 @@ def inject_current_year():
 
 @app.context_processor
 def inject_pending_forms():
-    if current_user.is_authenticated and (current_user.is_superadmin() or current_user.is_server_admin()):
-        try:
-            pending_forms = VettingForm.query.filter_by(status='submitted').count()
-            return {'pending_forms': pending_forms}
-        except:
-            # If the database query fails, don't break the app
-            return {'pending_forms': 0}
+    try:
+        if hasattr(current_user, 'is_authenticated') and current_user.is_authenticated:
+            if hasattr(current_user, 'is_superadmin') and (current_user.is_superadmin() or current_user.is_server_admin()):
+                try:
+                    pending_forms = VettingForm.query.filter_by(status='submitted').count()
+                    return {'pending_forms': pending_forms}
+                except Exception as e:
+                    logger.error(f"Error getting pending forms: {str(e)}")
+                    return {'pending_forms': 0}
+    except Exception as e:
+        logger.error(f"Error in inject_pending_forms: {str(e)}")
     return {'pending_forms': 0}
 
 # Create routes
