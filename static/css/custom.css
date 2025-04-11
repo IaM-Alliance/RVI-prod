@@ -1,0 +1,147 @@
+/* Custom CSS for IaM-Alliance Vetting System */
+
+/* Minimal custom styles, as we're primarily using Bootstrap */
+
+/* Additional spacing for form sections */
+.form-section {
+    margin-bottom: 2rem;
+}
+
+/* Audit log styling */
+.audit-log-entry {
+    border-left: 3px solid var(--bs-primary);
+    padding-left: 1rem;
+    margin-bottom: 1rem;
+}
+
+.audit-log-entry.login {
+    border-left-color: var(--bs-success);
+}
+
+.audit-log-entry.logout {
+    border-left-color: var(--bs-warning);
+}
+
+.audit-log-entry.password_change {
+    border-left-color: var(--bs-info);
+}
+
+.audit-log-entry.user_created {
+    border-left-color: var(--bs-purple);
+}
+
+.audit-log-entry.token_generated {
+    border-left-color: var(--bs-teal);
+}
+
+/* Token status indicators */
+.token-status {
+    font-weight: bold;
+}
+
+.token-status.pending {
+    color: var(--bs-warning);
+}
+
+.token-status.submitted {
+    color: var(--bs-success);
+}
+
+.token-status.failed {
+    color: var(--bs-danger);
+}
+
+/* Dashboard stats boxes */
+.stats-box {
+    padding: 1.5rem;
+    border-radius: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    margin-bottom: 1.5rem;
+    transition: all 0.2s ease-in-out;
+}
+
+.stats-box:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.stats-box h3 {
+    margin-bottom: 0.5rem;
+    font-size: 1.25rem;
+}
+
+.stats-box .count {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: var(--bs-primary);
+}
+
+/* Password strength meter */
+.password-strength-meter {
+    height: 5px;
+    margin-top: 5px;
+    background-color: var(--bs-gray-700);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.password-strength-meter div {
+    height: 100%;
+    width: 0;
+    transition: width 0.3s;
+}
+
+.password-strength-meter.weak div {
+    background-color: var(--bs-danger);
+    width: 25%;
+}
+
+.password-strength-meter.medium div {
+    background-color: var(--bs-warning);
+    width: 50%;
+}
+
+.password-strength-meter.strong div {
+    background-color: var(--bs-info);
+    width: 75%;
+}
+
+.password-strength-meter.very-strong div {
+    background-color: var(--bs-success);
+    width: 100%;
+}
+
+/* Helper for inline buttons and inputs */
+.input-group-append .btn {
+    border-top-left-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+/* Matrix token presentation */
+.matrix-token {
+    font-family: monospace;
+    padding: 0.5rem;
+    background-color: rgba(0, 0, 0, 0.2);
+    border-radius: 0.25rem;
+    word-break: break-all;
+}
+
+/* Prevent text overflow in tables */
+.table-responsive td {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+    .stats-box .count {
+        font-size: 2rem;
+    }
+    
+    .container {
+        padding-left: 1.5rem;
+        padding-right: 1.5rem;
+    }
+}

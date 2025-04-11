@@ -1,0 +1,142 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-4">Admin Dashboard</h1>
+        <p class="lead">Welcome, {{ current_user.username }}! This dashboard provides an overview of the system.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-4">
+        <div class="stats-box shadow">
+            <h3>Total Users</h3>
+            <div class="count">{{ user_count }}</div>
+            <p class="mb-0">Registered users in the system</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-box shadow">
+            <h3>Recent Activity</h3>
+            <div class="count">{{ recent_logs|length }}</div>
+            <p class="mb-0">Recent audit log entries</p>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="stats-box shadow">
+            <h3>Matrix Tokens</h3>
+            <div class="count">{{ recent_tokens|length }}</div>
+            <p class="mb-0">Recently generated tokens</p>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Recent Audit Logs</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>User</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for log in recent_logs %}
+                                <tr>
+                                    <td>{{ log.timestamp|datetime_format }}</td>
+                                    <td>{{ log.user.username }}</td>
+                                    <td>{{ log.action }}</td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No recent activity</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="card-footer">
+                <a href="{{ url_for('user_list') }}" class="btn btn-sm btn-outline-primary">View All Users</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Recent Matrix Tokens</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Created By</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for token in recent_tokens %}
+                                <tr>
+                                    <td>{{ token.created_at|datetime_format }}</td>
+                                    <td>{{ token.creator.username }}</td>
+                                    <td>
+                                        <span class="token-status {{ token.status }}">{{ token.status|upper }}</span>
+                                    </td>
+                                </tr>
+                            {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center">No tokens generated yet</td>
+                                </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('register_user') }}" class="btn btn-outline-primary d-block">
+                            <i class="fas fa-user-plus me-2"></i> Register New User
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('user_list') }}" class="btn btn-outline-primary d-block">
+                            <i class="fas fa-users me-2"></i> View All Users
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{{ url_for('change_password') }}" class="btn btn-outline-primary d-block">
+                            <i class="fas fa-key me-2"></i> Change Password
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

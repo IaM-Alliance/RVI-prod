@@ -1,0 +1,73 @@
+{% extends 'base.html' %}
+
+{% block title %}Matrix Registration - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="{{ url_for('agent_dashboard') }}">Dashboard</a></li>
+                <li class="breadcrumb-item active" aria-current="page">Matrix Registration</li>
+            </ol>
+        </nav>
+        
+        <h1 class="mb-4">Matrix Registration Form</h1>
+        <p class="lead">Register a new user with the Matrix API. This will generate a token for the user's registration.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Registration Details</h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>What happens next?</h5>
+                    <p>When you submit this form:</p>
+                    <ol>
+                        <li>A unique registration token will be generated</li>
+                        <li>The token will be sent to the Matrix API</li>
+                        <li>The system will log your submission for audit purposes</li>
+                        <li>You'll be able to view the generated token in your dashboard</li>
+                    </ol>
+                </div>
+                
+                <form method="POST" action="{{ url_for('matrix_form') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="mb-3">
+                        {{ form.full_name.label(class="form-label") }}
+                        {{ form.full_name(class="form-control", autofocus=true) }}
+                        {% if form.full_name.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.full_name.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control", type="email") }}
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

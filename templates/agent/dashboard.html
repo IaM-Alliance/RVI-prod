@@ -1,0 +1,116 @@
+{% extends 'base.html' %}
+
+{% block title %}Vetting Agent Dashboard - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-4">Vetting Agent Dashboard</h1>
+        <p class="lead">Welcome, {{ current_user.username }}! From here you can submit new Matrix registrations.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col-md-6">
+        <div class="stats-box shadow">
+            <h3>Your Registrations</h3>
+            <div class="count">{{ tokens|length }}</div>
+            <p class="mb-0">Total Matrix registrations you've submitted</p>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card bg-primary text-white shadow">
+            <div class="card-body">
+                <h5 class="card-title">Submit New Registration</h5>
+                <p class="card-text">Submit a new user registration to the Matrix API.</p>
+                <a href="{{ url_for('matrix_form') }}" class="btn btn-light">Submit Registration</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Your Registration History</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if tokens %}
+                    <div class="table-responsive">
+                        <table class="table table-hover data-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>User Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Token</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for token in tokens %}
+                                    <tr>
+                                        <td>{{ token.created_at|datetime_format }}</td>
+                                        <td>{{ token.user_fullname }}</td>
+                                        <td>{{ token.user_email }}</td>
+                                        <td>
+                                            <span class="token-status {{ token.status }}">{{ token.status|upper }}</span>
+                                        </td>
+                                        <td>
+                                            <div class="d-flex align-items-center">
+                                                <span class="text-truncate me-2" style="max-width: 150px;">{{ token.token }}</span>
+                                                <button class="btn btn-sm btn-outline-secondary" onclick="copyToClipboard('{{ token.token }}')">
+                                                    <i class="fas fa-copy"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                        <p class="lead">No registrations submitted yet</p>
+                        <a href="{{ url_for('matrix_form') }}" class="btn btn-primary">Submit Your First Registration</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert('Token copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Error copying text: ', err);
+            });
+    }
+    
+    $(document).ready(function() {
+        $('.data-table').DataTable({
+            "order": [[0, "desc"]], // Sort by date by default
+            "pageLength": 25,
+            "language": {
+                "search": "Search registrations:",
+                "emptyTable": "No registrations found"
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

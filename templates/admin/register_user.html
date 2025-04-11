@@ -1,0 +1,85 @@
+{% extends 'base.html' %}
+
+{% block title %}Register New User - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-4">Register New User</h1>
+        <p class="lead">Create a new user account with appropriate role permissions.</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">User Registration Form</h5>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('register_user') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>Important Information</h5>
+                        <p>When you register a new user:</p>
+                        <ul>
+                            <li>A temporary password will be generated</li>
+                            <li>The user will be required to change their password on first login</li>
+                            <li>Email notifications will be sent to both you and the new user</li>
+                            <li>You should send the temporary password to the user via Signal or Element</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.username.label(class="form-label") }}
+                        {{ form.username(class="form-control", autofocus=true) }}
+                        <small class="text-muted">Username must be at least 3 characters long</small>
+                        {% if form.username.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.username.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.email.label(class="form-label") }}
+                        {{ form.email(class="form-control", type="email") }}
+                        <small class="text-muted">A notification will be sent to this email address</small>
+                        {% if form.email.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.email.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="mb-3">
+                        {{ form.role.label(class="form-label") }}
+                        {{ form.role(class="form-select") }}
+                        <small class="text-muted">
+                            <strong>Vetting Agent:</strong> Can fill out vetting forms<br>
+                            <strong>Inviting Admin:</strong> Can fill out vetting forms and invite users<br>
+                            <strong>Server Admin:</strong> Can manage users and view all audit logs
+                        </small>
+                        {% if form.role.errors %}
+                            <div class="invalid-feedback d-block">
+                                {% for error in form.role.errors %}
+                                    {{ error }}
+                                {% endfor %}
+                            </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="d-grid">
+                        {{ form.submit(class="btn btn-primary") }}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
