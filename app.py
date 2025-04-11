@@ -65,6 +65,11 @@ def datetime_format(value, format='%Y-%m-%d %H:%M:%S'):
         return ""
     return value.strftime(format)
 
+@app.template_filter('nl2br')
+def nl2br(value):
+    if value:
+        return Markup(value.replace('\n', '<br>'))
+
 # Context processors
 @app.context_processor
 def inject_current_year():
@@ -174,11 +179,13 @@ def admin_dashboard():
     user_count = User.query.count()
     recent_logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(10).all()
     recent_tokens = MatrixToken.query.order_by(MatrixToken.created_at.desc()).limit(10).all()
+    pending_forms = VettingForm.query.filter_by(status='submitted').count()
     
     return render_template('admin/dashboard.html', 
                           user_count=user_count, 
                           recent_logs=recent_logs,
-                          recent_tokens=recent_tokens)
+                          recent_tokens=recent_tokens,
+                          pending_forms=pending_forms)
 
 @app.route('/admin/register-user', methods=['GET', 'POST'])
 @login_required
@@ -251,6 +258,66 @@ def audit_log(user_id):
     logs = AuditLog.query.filter_by(user_id=user_id).order_by(AuditLog.timestamp.desc()).all()
     
     return render_template('admin/audit_log.html', user=user, logs=logs)
+
+@app.route('/admin/vetting-forms')
+@login_required
+def admin_vetting_forms():
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    # Get submitted vetting forms that are pending review
+    pending_forms = VettingForm.query.filter_by(status='submitted').order_by(VettingForm.updated_at.desc()).all()
+    
+    # Get recently approved/rejected forms
+    processed_forms = VettingForm.query.filter(
+        VettingForm.status.in_(['approved', 'rejected']),
+        VettingForm.approved_by.isnot(None)
+    ).order_by(VettingForm.approved_at.desc()).limit(10).all()
+    
+    return render_template('admin/vetting_forms.html', 
+                          pending_forms=pending_forms,
+                          processed_forms=processed_forms)
+
+@app.route('/admin/vetting-form/<int:form_id>', methods=['GET', 'POST'])
+@login_required
+def admin_review_vetting_form(form_id):
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    # Get the vetting form record
+    vetting_form_record = VettingForm.query.get_or_404(form_id)
+    
+    # Check if the form is already processed
+    if vetting_form_record.status in ['approved', 'rejected']:
+        flash('This vetting form has already been processed.', 'info')
+    
+    # Get the agent who submitted the form
+    submitter = User.query.get(vetting_form_record.user_id)
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        
+        if action in ['approve', 'reject']:
+            vetting_form_record.status = 'approved' if action == 'approve' else 'rejected'
+            vetting_form_record.approved_by = current_user.id
+            vetting_form_record.approved_at = datetime.utcnow()
+            
+            # Log the approval/rejection
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action=f"vetting_form_{action}d",
+                details=f"Vetting form for {vetting_form_record.full_name} was {action}d",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
+            flash(f'Vetting form has been {action}d successfully.', 'success')
+            return redirect(url_for('admin_vetting_forms'))
+    
+    return render_template('admin/review_vetting_form.html', 
+                          form=vetting_form_record,
+                          submitter=submitter)
 
 # Agent Routes
 @app.route('/agent/dashboard')
@@ -327,7 +394,7 @@ def vetting_form():
     
     if form.validate_on_submit():
         # Create new vetting form record
-        new_form = models.VettingForm(
+        new_form = VettingForm(
             user_id=current_user.id,
             full_name=form.full_name.data,
             email=form.email.data,
@@ -376,7 +443,7 @@ def edit_vetting_form(form_id):
         return redirect(url_for('change_password'))
     
     # Get the vetting form record
-    vetting_form_record = models.VettingForm.query.get_or_404(form_id)
+    vetting_form_record = VettingForm.query.get_or_404(form_id)
     
     # Check if the current user is the owner or an admin
     if vetting_form_record.user_id != current_user.id and not current_user.is_server_admin():
