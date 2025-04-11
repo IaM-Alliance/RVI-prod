@@ -6,25 +6,43 @@
 <div class="row mb-4">
     <div class="col">
         <h1 class="mb-4">Vetting Agent Dashboard</h1>
-        <p class="lead">Welcome, {{ current_user.username }}! From here you can submit new Matrix registrations.</p>
+        <p class="lead">Welcome, {{ current_user.username }}! From here you can manage vetting forms and Matrix registrations.</p>
     </div>
 </div>
 
 <div class="row mb-4">
-    <div class="col-md-6">
+    <div class="col-md-3">
         <div class="stats-box shadow">
             <h3>Your Registrations</h3>
             <div class="count">{{ tokens|length }}</div>
-            <p class="mb-0">Total Matrix registrations you've submitted</p>
+            <p class="mb-0">Total Matrix registrations</p>
         </div>
     </div>
     
-    <div class="col-md-6">
-        <div class="card bg-primary text-white shadow">
-            <div class="card-body">
-                <h5 class="card-title">Submit New Registration</h5>
-                <p class="card-text">Submit a new user registration to the Matrix API.</p>
-                <a href="{{ url_for('matrix_form') }}" class="btn btn-light">Submit Registration</a>
+    <div class="col-md-3">
+        <div class="stats-box shadow">
+            <h3>Your Vetting Forms</h3>
+            <div class="count">{{ vetting_forms|length }}</div>
+            <p class="mb-0">Total vetting forms</p>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-primary text-white shadow h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">New Matrix Registration</h5>
+                <p class="card-text flex-grow-1">Submit a new user registration to the Matrix API.</p>
+                <a href="{{ url_for('matrix_form') }}" class="btn btn-light mt-2">Submit Registration</a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-3">
+        <div class="card bg-success text-white shadow h-100">
+            <div class="card-body d-flex flex-column">
+                <h5 class="card-title">New Vetting Form</h5>
+                <p class="card-text flex-grow-1">Create a new vetting form for an applicant.</p>
+                <a href="{{ url_for('vetting_form') }}" class="btn btn-light mt-2">Create Form</a>
             </div>
         </div>
     </div>
