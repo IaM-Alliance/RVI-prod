@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Vetting Forms Management - IaM-Alliance Admin Panel{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h1 class="mb-4">Vetting Forms Management</h1>
+        <p class="lead">Review and manage vetting forms submitted by agents.</p>
+    </div>
+</div>
+
+<div class="row mb-4">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">Pending Review ({{ pending_forms|length }})</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if pending_forms %}
+                    <div class="table-responsive">
+                        <table class="table table-hover data-table-pending mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Submission Date</th>
+                                    <th>Applicant Name</th>
+                                    <th>Email</th>
+                                    <th>Submitted By</th>
+                                    <th>Vetting Score</th>
+                                    <th>Recommendation</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in pending_forms %}
+                                    <tr>
+                                        <td>{{ form.updated_at|datetime_format }}</td>
+                                        <td>{{ form.full_name }}</td>
+                                        <td>{{ form.email }}</td>
+                                        <td>{{ form.submitted_by.username }}</td>
+                                        <td>{{ form.vetting_score if form.vetting_score else '-' }}</td>
+                                        <td>
+                                            {% if form.recommendation %}
+                                                <span class="badge {% if form.recommendation == 'approve' %}bg-success{% elif form.recommendation == 'reject' %}bg-danger{% else %}bg-warning{% endif %}">
+                                                    {{ form.recommendation|upper }}
+                                                </span>
+                                            {% else %}
+                                                -
+                                            {% endif %}
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin_review_vetting_form', form_id=form.id) }}" class="btn btn-sm btn-primary">Review</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-check-circle fa-3x mb-3 text-muted"></i>
+                        <p class="lead">No pending forms to review</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-success text-white">
+                <h5 class="card-title mb-0">Recently Processed Forms</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if processed_forms %}
+                    <div class="table-responsive">
+                        <table class="table table-hover data-table-processed mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Review Date</th>
+                                    <th>Applicant</th>
+                                    <th>Email</th>
+                                    <th>Submitted By</th>
+                                    <th>Reviewed By</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in processed_forms %}
+                                    <tr>
+                                        <td>{{ form.approved_at|datetime_format }}</td>
+                                        <td>{{ form.full_name }}</td>
+                                        <td>{{ form.email }}</td>
+                                        <td>{{ form.submitted_by.username }}</td>
+                                        <td>{{ form.approver.username }}</td>
+                                        <td>
+                                            <span class="badge {% if form.status == 'approved' %}bg-success{% elif form.status == 'rejected' %}bg-danger{% endif %}">
+                                                {{ form.status|upper }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{{ url_for('admin_review_vetting_form', form_id=form.id) }}" class="btn btn-sm btn-secondary">View</a>
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-clipboard-list fa-3x mb-3 text-muted"></i>
+                        <p class="lead">No processed forms yet</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('.data-table-pending').DataTable({
+            "order": [[0, "desc"]], // Sort by date by default
+            "pageLength": 10,
+            "language": {
+                "search": "Search pending forms:",
+                "emptyTable": "No pending forms found"
+            }
+        });
+        
+        $('.data-table-processed').DataTable({
+            "order": [[0, "desc"]], // Sort by date by default
+            "pageLength": 10,
+            "language": {
+                "search": "Search processed forms:",
+                "emptyTable": "No processed forms found"
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css">
+{% endblock %}

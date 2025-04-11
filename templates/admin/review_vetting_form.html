@@ -1,0 +1,258 @@
+{% extends 'base.html' %}
+
+{% block title %}Review Vetting Form - IaM-Alliance Admin Panel{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1>Review Vetting Form</h1>
+        <a href="{{ url_for('admin_vetting_forms') }}" class="btn btn-secondary">Back to Forms</a>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Submission Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Submitted By:</th>
+                            <td>{{ submitter.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Submission Date:</th>
+                            <td>{{ form.created_at|datetime_format }}</td>
+                        </tr>
+                        <tr>
+                            <th>Last Updated:</th>
+                            <td>{{ form.updated_at|datetime_format }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Status:</th>
+                            <td>
+                                <span class="badge {% if form.status == 'draft' %}bg-secondary{% elif form.status == 'submitted' %}bg-primary{% elif form.status == 'approved' %}bg-success{% elif form.status == 'rejected' %}bg-danger{% endif %}">
+                                    {{ form.status|upper }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% if form.status in ['approved', 'rejected'] %}
+                        <tr>
+                            <th>Reviewed By:</th>
+                            <td>{{ form.approver.username }}</td>
+                        </tr>
+                        <tr>
+                            <th>Review Date:</th>
+                            <td>{{ form.approved_at|datetime_format }}</td>
+                        </tr>
+                        {% endif %}
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Person Details</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Full Name:</th>
+                            <td>{{ form.full_name }}</td>
+                        </tr>
+                        <tr>
+                            <th>Email:</th>
+                            <td>{{ form.email }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Matrix ID:</th>
+                            <td>{{ form.matrix_id if form.matrix_id else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Phone Number:</th>
+                            <td>{{ form.phone_number if form.phone_number else '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Verification Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Identity Verified:</th>
+                            <td>
+                                {% if form.identity_verified %}
+                                    <span class="badge bg-success">YES</span>
+                                {% else %}
+                                    <span class="badge bg-danger">NO</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Verification Method:</th>
+                            <td>{{ form.verification_method if form.verification_method else '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Verification Date:</th>
+                            <td>{{ form.verification_date|datetime_format('%Y-%m-%d') if form.verification_date else '-' }}</td>
+                        </tr>
+                        <tr>
+                            <th>Verification Location:</th>
+                            <td>{{ form.verification_location if form.verification_location else '-' }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Vetting Assessment</h5>
+        </div>
+        <div class="card-body">
+            <div class="row">
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Vetting Score:</th>
+                            <td>
+                                {% if form.vetting_score %}
+                                    <span class="badge {% if form.vetting_score >= 4 %}bg-success{% elif form.vetting_score == 3 %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ form.vetting_score }} / 5
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Recommendation:</th>
+                            <td>
+                                {% if form.recommendation %}
+                                    <span class="badge {% if form.recommendation == 'approve' %}bg-success{% elif form.recommendation == 'reject' %}bg-danger{% else %}bg-warning{% endif %}">
+                                        {{ form.recommendation|upper }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+                <div class="col-md-6">
+                    <table class="table table-borderless">
+                        <tr>
+                            <th style="width: 40%">Security Questions Answered:</th>
+                            <td>
+                                {% if form.security_questions_answered %}
+                                    <span class="badge bg-success">YES</span>
+                                {% else %}
+                                    <span class="badge bg-danger">NO</span>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        <tr>
+                            <th>Trust Level:</th>
+                            <td>
+                                {% if form.trust_level %}
+                                    <span class="badge {% if form.trust_level == 'high' %}bg-success{% elif form.trust_level == 'medium' %}bg-warning{% else %}bg-danger{% endif %}">
+                                        {{ form.trust_level|upper }}
+                                    </span>
+                                {% else %}
+                                    -
+                                {% endif %}
+                            </td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+            
+            <div class="row mt-3">
+                <div class="col-12">
+                    <h6 class="fw-bold">Vetting Notes:</h6>
+                    <div class="border rounded p-3 bg-light">
+                        {{ form.vetting_notes|default('-', true)|nl2br }}
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    {% if form.additional_info %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Additional Information</h5>
+        </div>
+        <div class="card-body">
+            <div class="border rounded p-3 bg-light">
+                {{ form.additional_info|nl2br }}
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    
+    {% if form.status == 'submitted' %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Review Decision</h5>
+        </div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="row">
+                    <div class="col-md-6">
+                        <button type="submit" name="action" value="approve" class="btn btn-success w-100 py-3">
+                            <i class="fas fa-check-circle me-2"></i> Approve Vetting Form
+                        </button>
+                        <div class="small text-muted mt-2">
+                            Approving this form will finalize the vetting process and mark the applicant as vetted.
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <button type="submit" name="action" value="reject" class="btn btn-danger w-100 py-3">
+                            <i class="fas fa-times-circle me-2"></i> Reject Vetting Form
+                        </button>
+                        <div class="small text-muted mt-2">
+                            Rejecting this form will mark the applicant as not meeting the vetting requirements.
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    th {
+        font-weight: 600;
+    }
+</style>
+{% endblock %}

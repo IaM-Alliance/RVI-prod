@@ -48,6 +48,62 @@
     </div>
 </div>
 
+<div class="row mb-4">
+    <div class="col">
+        <div class="card shadow">
+            <div class="card-header bg-primary text-white">
+                <h5 class="card-title mb-0">Your Vetting Forms</h5>
+            </div>
+            <div class="card-body p-0">
+                {% if vetting_forms %}
+                    <div class="table-responsive">
+                        <table class="table table-hover data-table-vetting mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Full Name</th>
+                                    <th>Email</th>
+                                    <th>Status</th>
+                                    <th>Score</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for form in vetting_forms %}
+                                    <tr>
+                                        <td>{{ form.updated_at|datetime_format }}</td>
+                                        <td>{{ form.full_name }}</td>
+                                        <td>{{ form.email }}</td>
+                                        <td>
+                                            <span class="badge {% if form.status == 'draft' %}bg-secondary{% elif form.status == 'submitted' %}bg-primary{% elif form.status == 'approved' %}bg-success{% elif form.status == 'rejected' %}bg-danger{% endif %}">
+                                                {{ form.status|upper }}
+                                            </span>
+                                        </td>
+                                        <td>{{ form.vetting_score if form.vetting_score else '-' }}</td>
+                                        <td>
+                                            {% if form.status in ['draft', 'submitted'] %}
+                                                <a href="{{ url_for('edit_vetting_form', form_id=form.id) }}" class="btn btn-sm btn-primary">Edit</a>
+                                            {% else %}
+                                                <a href="{{ url_for('edit_vetting_form', form_id=form.id) }}" class="btn btn-sm btn-secondary">View</a>
+                                            {% endif %}
+                                        </td>
+                                    </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-alt fa-3x mb-3 text-muted"></i>
+                        <p class="lead">No vetting forms submitted yet</p>
+                        <a href="{{ url_for('vetting_form') }}" class="btn btn-success">Create Your First Vetting Form</a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="row">
     <div class="col">
         <div class="card shadow">
@@ -57,7 +113,7 @@
             <div class="card-body p-0">
                 {% if tokens %}
                     <div class="table-responsive">
-                        <table class="table table-hover data-table mb-0">
+                        <table class="table table-hover data-table-tokens mb-0">
                             <thead>
                                 <tr>
                                     <th>Date</th>
@@ -74,7 +130,9 @@
                                         <td>{{ token.user_fullname }}</td>
                                         <td>{{ token.user_email }}</td>
                                         <td>
-                                            <span class="token-status {{ token.status }}">{{ token.status|upper }}</span>
+                                            <span class="badge {% if token.status == 'pending' %}bg-warning{% elif token.status == 'submitted' %}bg-success{% elif token.status == 'failed' %}bg-danger{% endif %}">
+                                                {{ token.status|upper }}
+                                            </span>
                                         </td>
                                         <td>
                                             <div class="d-flex align-items-center">
@@ -117,9 +175,18 @@
     }
     
     $(document).ready(function() {
-        $('.data-table').DataTable({
+        $('.data-table-vetting').DataTable({
             "order": [[0, "desc"]], // Sort by date by default
-            "pageLength": 25,
+            "pageLength": 10,
+            "language": {
+                "search": "Search vetting forms:",
+                "emptyTable": "No vetting forms found"
+            }
+        });
+        
+        $('.data-table-tokens').DataTable({
+            "order": [[0, "desc"]], // Sort by date by default
+            "pageLength": 10,
             "language": {
                 "search": "Search registrations:",
                 "emptyTable": "No registrations found"
