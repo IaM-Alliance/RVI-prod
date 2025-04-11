@@ -16,6 +16,10 @@ class User(UserMixin, db.Model):
     # Relationships
     audit_logs = db.relationship('AuditLog', backref='user', lazy=True)
     tokens = db.relationship('MatrixToken', backref='creator', lazy=True)
+    vetting_forms = db.relationship('VettingForm', 
+                                   foreign_keys='VettingForm.user_id',
+                                   backref='submitted_by', 
+                                   lazy=True)
     
     def is_superadmin(self):
         return self.role == 'superadmin'
@@ -46,3 +50,48 @@ class MatrixToken(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, submitted, failed
     response_data = db.Column(db.Text)  # To store API response
+    vetting_form_id = db.Column(db.Integer, db.ForeignKey('vetting_form.id'), nullable=True)
+
+class VettingForm(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    status = db.Column(db.String(20), default='draft')  # draft, submitted, approved, rejected
+    
+    # Person details
+    full_name = db.Column(db.String(120), nullable=False)
+    email = db.Column(db.String(120), nullable=False)
+    matrix_id = db.Column(db.String(120), nullable=True)
+    phone_number = db.Column(db.String(20), nullable=True)
+    
+    # Verification info
+    identity_verified = db.Column(db.Boolean, default=False)
+    verification_method = db.Column(db.String(50), nullable=True)  # in-person, video, trusted-referral
+    verification_date = db.Column(db.DateTime, nullable=True)
+    verification_location = db.Column(db.String(120), nullable=True)
+    
+    # Vetting information
+    vetting_notes = db.Column(db.Text, nullable=True)
+    vetting_score = db.Column(db.Integer, nullable=True)  # 1-5 score
+    recommendation = db.Column(db.String(20), nullable=True)  # approve, reject, further-verification
+    
+    # Security and trust information
+    security_questions_answered = db.Column(db.Boolean, default=False)
+    trust_level = db.Column(db.String(20), nullable=True)  # low, medium, high
+    
+    # Additional details
+    additional_info = db.Column(db.Text, nullable=True)
+    
+    # Approval information
+    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    approved_at = db.Column(db.DateTime, nullable=True)
+    
+    # Relationships
+    approver = db.relationship('User', 
+                             foreign_keys=[approved_by], 
+                             backref=db.backref('approved_forms', lazy=True))
+    matrix_tokens = db.relationship('MatrixToken', backref='vetting_form', lazy=True)
+    
+    def __repr__(self):
+        return f'<VettingForm {self.id}: {self.full_name}>'

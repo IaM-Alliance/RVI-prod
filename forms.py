@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField
-from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError
+from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField
+from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from models import User
 
 class LoginForm(FlaskForm):
@@ -53,3 +53,54 @@ class MatrixRegistrationForm(FlaskForm):
         Email()
     ])
     submit = SubmitField('Generate Token and Submit')
+
+class VettingForm(FlaskForm):
+    # Person details
+    full_name = StringField('Full Name', validators=[DataRequired(), Length(max=120)])
+    email = EmailField('Email Address', validators=[DataRequired(), Email(), Length(max=120)])
+    matrix_id = StringField('Matrix ID (if available)', validators=[Optional(), Length(max=120)])
+    phone_number = StringField('Phone Number', validators=[Optional(), Length(max=20)])
+    
+    # Verification info
+    identity_verified = BooleanField('Identity Verified')
+    verification_method = SelectField('Verification Method', choices=[
+        ('', 'Select Method'),
+        ('in-person', 'In-Person Meeting'),
+        ('video', 'Video Call'),
+        ('trusted-referral', 'Trusted Referral')
+    ], validators=[Optional()])
+    verification_date = DateField('Verification Date', format='%Y-%m-%d', validators=[Optional()])
+    verification_location = StringField('Verification Location (city/online platform)', validators=[Optional(), Length(max=120)])
+    
+    # Vetting information
+    vetting_notes = TextAreaField('Vetting Notes', validators=[Optional()])
+    vetting_score = SelectField('Vetting Score (1-5)', choices=[
+        ('', 'Select Score'),
+        ('1', '1 - Very Low Trust'),
+        ('2', '2 - Low Trust'),
+        ('3', '3 - Moderate Trust'),
+        ('4', '4 - High Trust'),
+        ('5', '5 - Very High Trust')
+    ], validators=[Optional()])
+    recommendation = SelectField('Recommendation', choices=[
+        ('', 'Select Recommendation'),
+        ('approve', 'Approve'),
+        ('reject', 'Reject'),
+        ('further-verification', 'Request Further Verification')
+    ], validators=[Optional()])
+    
+    # Security and trust information
+    security_questions_answered = BooleanField('Security Questions Answered')
+    trust_level = SelectField('Trust Level', choices=[
+        ('', 'Select Trust Level'),
+        ('low', 'Low'),
+        ('medium', 'Medium'),
+        ('high', 'High')
+    ], validators=[Optional()])
+    
+    # Additional details
+    additional_info = TextAreaField('Additional Information', validators=[Optional()])
+    
+    # Submission buttons
+    save_draft = SubmitField('Save as Draft')
+    submit = SubmitField('Submit for Review')
