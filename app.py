@@ -211,9 +211,28 @@ def register_user():
     
     form = UserRegistrationForm()
     
+    # Only show server_admin option for superadmin
+    if not current_user.is_superadmin():
+        form.role.choices = [
+            ('vetting_agent', 'Vetting Agent'),
+            ('inviting_admin', 'Inviting Admin')
+        ]
+    
     if form.validate_on_submit():
         # Generate a random temporary password
         temp_password = generate_random_password()
+        
+        # Determine registration status
+        # Superadmins can create any account immediately
+        # Server admins need approval for creating vetting_agent and inviting_admin accounts
+        if current_user.is_superadmin() or form.role.data == 'server_admin':
+            status = 'active'
+            approved_by = current_user.id
+            approved_at = datetime.utcnow()
+        else:
+            status = 'pending'
+            approved_by = None
+            approved_at = None
         
         # Create the new user
         new_user = User(
@@ -222,34 +241,45 @@ def register_user():
             password_hash=generate_password_hash(temp_password),
             role=form.role.data,
             needs_password_change=True,
-            created_by=current_user.id
+            created_by=current_user.id,
+            status=status,
+            approved_by=approved_by,
+            approved_at=approved_at
         )
         
         db.session.add(new_user)
         
         # Log the user creation
+        action = "user_created" if status == 'active' else "user_created_pending"
+        details = f"Created new user: {form.username.data} with role: {form.role.data}"
+        if status == 'pending':
+            details += " (awaiting approval)"
+            
         log_entry = AuditLog(
             user_id=current_user.id,
-            action="user_created",
-            details=f"Created new user: {form.username.data} with role: {form.role.data}",
+            action=action,
+            details=details,
             ip_address=request.remote_addr
         )
         db.session.add(log_entry)
         db.session.commit()
         
-        # Send notifications
-        try:
-            send_account_notification(
-                admin_email=current_user.email,
-                user_email=new_user.email,
-                username=new_user.username,
-                admin_name=current_user.username
-            )
-            flash(f'User {new_user.username} created successfully. Temporary password: {temp_password}', 'success')
-            flash('Notification emails have been sent.', 'info')
-        except Exception as e:
-            logger.error(f"Email notification error: {str(e)}")
-            flash(f'User created, but email notifications failed. Temporary password: {temp_password}', 'warning')
+        # Only send notifications for active users
+        if status == 'active':
+            try:
+                send_account_notification(
+                    admin_email=current_user.email,
+                    user_email=new_user.email,
+                    username=new_user.username,
+                    admin_name=current_user.username
+                )
+                flash(f'User {new_user.username} created successfully. Temporary password: {temp_password}', 'success')
+                flash('Notification emails have been sent.', 'info')
+            except Exception as e:
+                logger.error(f"Email notification error: {str(e)}")
+                flash(f'User created, but email notifications failed. Temporary password: {temp_password}', 'warning')
+        else:
+            flash(f'User {new_user.username} created and awaiting approval from a Superadmin or Server Admin.', 'info')
         
         return redirect(url_for('user_list'))
     
@@ -262,7 +292,98 @@ def user_list():
         abort(403)
     
     users = User.query.all()
-    return render_template('admin/user_list.html', users=users)
+    # Get count of pending users
+    pending_users_count = User.query.filter_by(status='pending').count()
+    
+    return render_template('admin/user_list.html', users=users, pending_users_count=pending_users_count)
+
+@app.route('/admin/approve-user/<int:user_id>', methods=['GET', 'POST'])
+@login_required
+def approve_user(user_id):
+    if not (current_user.is_superadmin() or current_user.is_server_admin()):
+        abort(403)
+    
+    # Get the user to approve
+    user = User.query.get_or_404(user_id)
+    
+    # Check if user is pending
+    if user.status != 'pending':
+        flash('This user is not pending approval.', 'warning')
+        return redirect(url_for('user_list'))
+    
+    # Check if user is trying to approve their own created user
+    if user.created_by == current_user.id:
+        flash('You cannot approve a user you created. Another admin must approve this user.', 'warning')
+        return redirect(url_for('user_list'))
+    
+    # Check if trying to approve a server_admin (only superadmin can do this)
+    if user.role == 'server_admin' and not current_user.is_superadmin():
+        flash('Only a Superadmin can approve a Server Admin account.', 'danger')
+        return redirect(url_for('user_list'))
+    
+    if request.method == 'POST':
+        action = request.form.get('action')
+        notes = request.form.get('notes', '')
+        
+        if action not in ['approve', 'reject']:
+            flash('Invalid action.', 'danger')
+            return redirect(url_for('user_list'))
+        
+        if action == 'approve':
+            user.status = 'active'
+            user.approved_by = current_user.id
+            user.approved_at = datetime.utcnow()
+            user.approval_notes = notes
+            
+            # Generate a random temporary password
+            temp_password = generate_random_password()
+            user.password_hash = generate_password_hash(temp_password)
+            
+            # Log the approval
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action="user_approved",
+                details=f"Approved user: {user.username} with role: {user.role}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
+            # Send notification
+            try:
+                send_account_notification(
+                    admin_email=current_user.email,
+                    user_email=user.email,
+                    username=user.username,
+                    admin_name=current_user.username
+                )
+                flash(f'User {user.username} approved successfully. Temporary password: {temp_password}', 'success')
+                flash('Notification emails have been sent.', 'info')
+            except Exception as e:
+                logger.error(f"Email notification error: {str(e)}")
+                flash(f'User approved, but email notifications failed. Temporary password: {temp_password}', 'warning')
+        else:  # reject
+            user.status = 'rejected'
+            user.approved_by = current_user.id
+            user.approved_at = datetime.utcnow()
+            user.approval_notes = notes
+            
+            # Log the rejection
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action="user_rejected",
+                details=f"Rejected user: {user.username} with role: {user.role}. Reason: {notes}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
+            flash(f'User {user.username} has been rejected.', 'info')
+        
+        return redirect(url_for('user_list'))
+    
+    # Pass User query to template for looking up the creator
+    return render_template('admin/approve_user.html', user=user, user_query=User.query)
 
 @app.route('/admin/audit-log/<int:user_id>')
 @login_required
@@ -359,6 +480,11 @@ def matrix_form():
     if current_user.needs_password_change:
         flash('Please change your temporary password before continuing.', 'warning')
         return redirect(url_for('change_password'))
+        
+    # Only allow inviting_admin, server_admin and superadmin to access matrix registration
+    if current_user.is_vetting_agent():
+        flash('You do not have permission to access Matrix registration.', 'danger')
+        return redirect(url_for('agent_dashboard'))
     
     form = MatrixRegistrationForm()
     
@@ -406,11 +532,11 @@ def vetting_form():
         flash('Please change your temporary password before continuing.', 'warning')
         return redirect(url_for('change_password'))
     
-    form = VettingFormClass()
+    form = VettingForm()  # Use the actual class name from forms.py
     
     if form.validate_on_submit():
         # Create new vetting form record
-        new_form = VettingForm(
+        new_form_record = VettingForm(  # Use VettingForm model from models.py
             user_id=current_user.id,
             full_name=form.full_name.data,
             email=form.email.data,
@@ -429,7 +555,7 @@ def vetting_form():
             status='draft' if 'save_draft' in request.form else 'submitted'
         )
         
-        db.session.add(new_form)
+        db.session.add(new_form_record)
         
         # Log the form submission
         action = "vetting_form_draft" if 'save_draft' in request.form else "vetting_form_submitted"
@@ -470,7 +596,7 @@ def edit_vetting_form(form_id):
         flash('This vetting form has already been processed and cannot be edited.', 'warning')
         return redirect(url_for('agent_dashboard'))
     
-    form = VettingFormClass(obj=vetting_form_record)
+    form = VettingForm(obj=vetting_form_record)  # Use the same form class from forms.py
     
     if form.validate_on_submit():
         # Update the form data
