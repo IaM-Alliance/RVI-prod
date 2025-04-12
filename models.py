@@ -31,13 +31,14 @@ class User(UserMixin, db.Model):
         return self.role == 'superadmin'
     
     def is_server_admin(self):
-        return self.role == 'server_admin' or self.role == 'superadmin'
+        return self.role == 'server_admin' or self.is_superadmin()
     
     def is_vetting_agent(self):
-        return self.role == 'vetting_agent' or 'admin' in self.role
+        # Only returns true for vetting agents specifically, not for admins
+        return self.role == 'vetting_agent'
     
     def is_inviting_admin(self):
-        return self.role == 'inviting_admin' or self.role == 'superadmin' or self.role == 'server_admin'
+        return self.role == 'inviting_admin' or self.is_superadmin() or self.is_server_admin()
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
