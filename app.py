@@ -339,12 +339,18 @@ def admin_dashboard():
     recent_logs = AuditLog.query.order_by(AuditLog.timestamp.desc()).limit(10).all()
     recent_tokens = MatrixToken.query.order_by(MatrixToken.created_at.desc()).limit(10).all()
     pending_forms = VettingForm.query.filter_by(status='submitted').count()
+    awaiting_token_forms = 0
+    
+    # Only count awaiting_token_forms for inviting_admin and above
+    if current_user.is_inviting_admin():
+        awaiting_token_forms = VettingForm.query.filter_by(status='awaiting_token').count()
     
     return render_template('admin/dashboard.html', 
                           user_count=user_count, 
                           recent_logs=recent_logs,
                           recent_tokens=recent_tokens,
-                          pending_forms=pending_forms)
+                          pending_forms=pending_forms,
+                          awaiting_token_forms=awaiting_token_forms)
 
 @app.route('/admin/register-user', methods=['GET', 'POST'])
 @login_required
