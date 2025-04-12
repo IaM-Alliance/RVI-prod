@@ -154,6 +154,19 @@ def datetime_format(value, format='%Y-%m-%d %H:%M:%S'):
         return ""
     return value.strftime(format)
 
+@app.template_filter('timestamp_format')
+def timestamp_format(value, format='%Y-%m-%d %H:%M:%S'):
+    """Format a Unix timestamp to human-readable date."""
+    if not value:
+        return "Unknown"
+    try:
+        # Convert Unix timestamp to datetime
+        dt = datetime.fromtimestamp(int(value))
+        return dt.strftime(format)
+    except (ValueError, TypeError) as e:
+        logger.error(f"Error formatting timestamp {value}: {str(e)}")
+        return "Invalid timestamp"
+
 @app.template_filter('nl2br')
 def nl2br(value):
     if value:
