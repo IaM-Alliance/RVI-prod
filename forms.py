@@ -57,7 +57,7 @@ class MatrixRegistrationForm(FlaskForm):
     ])
     submit = SubmitField('Generate Token and Submit')
 
-class VettingForm(FlaskForm):
+class VettingFormClass(FlaskForm):
     # Person details
     full_name = StringField('Full Name', validators=[DataRequired(), Length(max=120)])
     email = EmailField('Email Address', validators=[DataRequired(), Email(), Length(max=120)])
