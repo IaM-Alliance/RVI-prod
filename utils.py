@@ -99,8 +99,9 @@ def matrix_api_post(token, user_fullname, user_email, assigned_username):
     Register a new token with the Matrix API.
     """
     try:
-        # Base URL from the example
-        api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens"
+        # Based on the documentation, the correct endpoint to create a new token
+        # Would be a PUT request to this endpoint with the specific token in the URL
+        api_url = f"https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/{token}"
         bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
         
         if not bearer_token:
@@ -115,15 +116,14 @@ def matrix_api_post(token, user_fullname, user_email, assigned_username):
         expiry_time_seconds = int(time.time()) + (30 * 24 * 60 * 60)  # 30 days in seconds
         expiry_time_ms = expiry_time_seconds * 1000  # Convert to milliseconds
         
-        # Prepare request data
+        # Prepare request data based on the documented token object structure
         request_data = {
-            "token": token,
             "uses_allowed": 1,
             "expiry_time": expiry_time_ms
         }
         
-        # Make the API request - using POST to the correct endpoint
-        response = requests.post(
+        # Make the API request - using PUT to the specific token endpoint
+        response = requests.put(
             api_url,
             json=request_data,
             headers={
