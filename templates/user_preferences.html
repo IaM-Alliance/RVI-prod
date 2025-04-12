@@ -1,0 +1,299 @@
+{% extends 'base.html' %}
+
+{% block title %}User Preferences - IaM-Alliance Vetting System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .color-preview {
+        width: 20px;
+        height: 20px;
+        display: inline-block;
+        margin-right: 10px;
+        border-radius: 4px;
+        vertical-align: middle;
+    }
+    
+    .form-check-input:checked ~ .form-check-label .toggle-label {
+        font-weight: bold;
+    }
+    
+    .color-select-group {
+        margin-bottom: 30px;
+    }
+    
+    .color-select-group h5 {
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        padding-bottom: 8px;
+        margin-bottom: 15px;
+    }
+    
+    /* Color samples */
+    .color-sample {
+        display: inline-block;
+        width: 100%;
+        padding: 8px;
+        border-radius: 5px;
+        margin-bottom: 5px;
+        text-align: center;
+        font-weight: bold;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card shadow mb-4">
+            <div class="card-header bg-primary text-white">
+                <h3 class="card-title mb-0">User Preferences</h3>
+            </div>
+            
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('user_preferences') }}">
+                    {{ form.hidden_tag() }}
+                    
+                    <div class="row">
+                        <!-- Core Preferences -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4 class="mb-0">Display Options</h4>
+                                </div>
+                                <div class="card-body">
+                                    <div class="mb-3">
+                                        {{ form.theme.label(class="form-label") }}
+                                        {{ form.theme(class="form-select") }}
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.animation_enabled(class="form-check-input") }}
+                                        {{ form.animation_enabled.label(class="form-check-label") }}
+                                    </div>
+                                    
+                                    <div class="form-check form-switch mb-3">
+                                        {{ form.tooltip_enabled(class="form-check-input") }}
+                                        {{ form.tooltip_enabled.label(class="form-check-label") }}
+                                    </div>
+                                    
+                                    <div class="alert alert-info">
+                                        <i class="fas fa-info-circle me-2"></i>
+                                        Theme changes will take effect after page refresh
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Color Preview -->
+                        <div class="col-md-6">
+                            <div class="card mb-4">
+                                <div class="card-header">
+                                    <h4 class="mb-0">Color Preview</h4>
+                                </div>
+                                <div class="card-body">
+                                    <h5>Token Status Colors</h5>
+                                    <div class="mb-3">
+                                        <span class="color-sample {{ form.token_available_color.data }}">Available Token</span>
+                                        <span class="color-sample {{ form.token_used_color.data }}">Used Token</span>
+                                        <span class="color-sample {{ form.token_pending_color.data }}">Pending Token</span>
+                                        <span class="color-sample {{ form.token_expired_color.data }}">Expired Token</span>
+                                        <span class="color-sample {{ form.token_error_color.data }}">Error Token</span>
+                                    </div>
+                                    
+                                    <h5>User Role Colors</h5>
+                                    <div class="mb-3">
+                                        <span class="color-sample {{ form.superadmin_color.data }}">Superadmin</span>
+                                        <span class="color-sample {{ form.server_admin_color.data }}">Server Admin</span>
+                                        <span class="color-sample {{ form.inviting_admin_color.data }}">Inviting Admin</span>
+                                        <span class="color-sample {{ form.vetting_agent_color.data }}">Vetting Agent</span>
+                                    </div>
+                                    
+                                    <h5>Form Status Colors</h5>
+                                    <div class="mb-3">
+                                        <span class="color-sample {{ form.active_status_color.data }}">Active</span>
+                                        <span class="color-sample {{ form.pending_status_color.data }}">Pending</span>
+                                        <span class="color-sample {{ form.awaiting_token_status_color.data }}">Awaiting Token</span>
+                                        <span class="color-sample {{ form.rejected_status_color.data }}">Rejected</span>
+                                        <span class="color-sample {{ form.draft_status_color.data }}">Draft</span>
+                                        <span class="color-sample {{ form.submitted_status_color.data }}">Submitted</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Token Colors -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">Token Status Colors</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row color-select-group">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.token_available_color.label(class="form-label") }}
+                                        {{ form.token_available_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.token_used_color.label(class="form-label") }}
+                                        {{ form.token_used_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.token_pending_color.label(class="form-label") }}
+                                        {{ form.token_pending_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.token_expired_color.label(class="form-label") }}
+                                        {{ form.token_expired_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.token_error_color.label(class="form-label") }}
+                                        {{ form.token_error_color(class="form-select") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Role Colors -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">User Role Colors</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row color-select-group">
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.superadmin_color.label(class="form-label") }}
+                                        {{ form.superadmin_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.server_admin_color.label(class="form-label") }}
+                                        {{ form.server_admin_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.inviting_admin_color.label(class="form-label") }}
+                                        {{ form.inviting_admin_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-3">
+                                    <div class="mb-3">
+                                        {{ form.vetting_agent_color.label(class="form-label") }}
+                                        {{ form.vetting_agent_color(class="form-select") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Form Status Colors -->
+                    <div class="card mb-4">
+                        <div class="card-header">
+                            <h4 class="mb-0">Form Status Colors</h4>
+                        </div>
+                        <div class="card-body">
+                            <div class="row color-select-group">
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.active_status_color.label(class="form-label") }}
+                                        {{ form.active_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.pending_status_color.label(class="form-label") }}
+                                        {{ form.pending_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.awaiting_token_status_color.label(class="form-label") }}
+                                        {{ form.awaiting_token_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.rejected_status_color.label(class="form-label") }}
+                                        {{ form.rejected_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.draft_status_color.label(class="form-label") }}
+                                        {{ form.draft_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                                <div class="col-md-4">
+                                    <div class="mb-3">
+                                        {{ form.submitted_status_color.label(class="form-label") }}
+                                        {{ form.submitted_status_color(class="form-select") }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('index') }}" class="btn btn-secondary">Cancel</a>
+                        <button type="submit" class="btn btn-primary">{{ form.submit.label }}</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Real-time color preview update when selecting colors
+        const colorSelects = document.querySelectorAll('select[id$="_color"]');
+        
+        colorSelects.forEach(select => {
+            // Get the corresponding preview elements
+            const selectId = select.id;
+            const statusType = selectId.replace('_color', '');
+            
+            select.addEventListener('change', function() {
+                // Update the preview
+                updateColorPreviews();
+            });
+        });
+        
+        function updateColorPreviews() {
+            // Token Status Colors
+            document.querySelector('.color-sample:nth-child(1)').className = 'color-sample ' + document.getElementById('token_available_color').value;
+            document.querySelector('.color-sample:nth-child(2)').className = 'color-sample ' + document.getElementById('token_used_color').value;
+            document.querySelector('.color-sample:nth-child(3)').className = 'color-sample ' + document.getElementById('token_pending_color').value;
+            document.querySelector('.color-sample:nth-child(4)').className = 'color-sample ' + document.getElementById('token_expired_color').value;
+            document.querySelector('.color-sample:nth-child(5)').className = 'color-sample ' + document.getElementById('token_error_color').value;
+            
+            // User Role Colors
+            document.querySelectorAll('h5:nth-of-type(2) + div .color-sample')[0].className = 'color-sample ' + document.getElementById('superadmin_color').value;
+            document.querySelectorAll('h5:nth-of-type(2) + div .color-sample')[1].className = 'color-sample ' + document.getElementById('server_admin_color').value;
+            document.querySelectorAll('h5:nth-of-type(2) + div .color-sample')[2].className = 'color-sample ' + document.getElementById('inviting_admin_color').value;
+            document.querySelectorAll('h5:nth-of-type(2) + div .color-sample')[3].className = 'color-sample ' + document.getElementById('vetting_agent_color').value;
+            
+            // Form Status Colors
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[0].className = 'color-sample ' + document.getElementById('active_status_color').value;
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[1].className = 'color-sample ' + document.getElementById('pending_status_color').value;
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[2].className = 'color-sample ' + document.getElementById('awaiting_token_status_color').value;
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[3].className = 'color-sample ' + document.getElementById('rejected_status_color').value;
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[4].className = 'color-sample ' + document.getElementById('draft_status_color').value;
+            document.querySelectorAll('h5:nth-of-type(3) + div .color-sample')[5].className = 'color-sample ' + document.getElementById('submitted_status_color').value;
+        }
+    });
+</script>
+{% endblock %}
