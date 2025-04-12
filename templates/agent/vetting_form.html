@@ -393,30 +393,33 @@
         const clearButtons = document.querySelectorAll('.clear-file-btn');
         clearButtons.forEach(button => {
             button.addEventListener('click', function(e) {
+                e.preventDefault();
                 const targetId = this.getAttribute('data-target');
                 const fileInput = document.getElementById(targetId);
                 
-                // Create a new file input element
-                const newFileInput = document.createElement('input');
-                // Copy all attributes from the old input
-                Array.from(fileInput.attributes).forEach(attr => {
-                    if (attr.name !== 'value') {
-                        newFileInput.setAttribute(attr.name, attr.value);
-                    }
-                });
-                // Replace the old input with the new one
-                fileInput.parentNode.replaceChild(newFileInput, fileInput);
+                // Simplest approach - create a clone and replace
+                const fileInputParent = fileInput.parentNode;
                 
-                // Show feedback to the user
-                const feedbackSpan = document.createElement('span');
-                feedbackSpan.className = 'text-success d-block mt-1';
-                feedbackSpan.textContent = 'File cleared';
-                newFileInput.parentNode.appendChild(feedbackSpan);
+                // Create a new input with same attributes
+                const newInput = document.createElement('input');
+                newInput.type = 'file';
+                newInput.name = fileInput.name;
+                newInput.id = fileInput.id;
+                newInput.className = fileInput.className;
                 
-                // Remove the feedback message after 2 seconds
+                // Clear the value (this is the magic part) by replacing with the new input
+                fileInputParent.replaceChild(newInput, fileInput);
+                
+                // Show visual feedback
+                const feedbackEl = document.createElement('div');
+                feedbackEl.className = 'alert alert-success mt-2 py-1';
+                feedbackEl.innerHTML = 'File cleared successfully';
+                fileInputParent.appendChild(feedbackEl);
+                
+                // Remove feedback after 2 seconds
                 setTimeout(() => {
-                    if (feedbackSpan.parentNode) {
-                        feedbackSpan.parentNode.removeChild(feedbackSpan);
+                    if (feedbackEl.parentNode) {
+                        feedbackEl.parentNode.removeChild(feedbackEl);
                     }
                 }, 2000);
             });
