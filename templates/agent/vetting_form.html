@@ -144,55 +144,83 @@
             </div>
             <div class="card-body">
                 {% if editing and evidence_files %}
-                    <div class="mb-4">
-                        <h6>Existing Evidence Files</h6>
-                        <div class="table-responsive">
-                            <table class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>Filename</th>
-                                        <th>Date Uploaded</th>
-                                        <th>Notes</th>
-                                        <th>Actions</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for evidence in evidence_files %}
-                                    <tr>
-                                        <td>
-                                            <a href="{{ url_for('serve_evidence_file', filename=evidence.file_path.split('/')[-1]) }}" target="_blank">
-                                                {{ evidence.filename }}
-                                            </a>
-                                        </td>
-                                        <td>{{ evidence.uploaded_at | datetime_format }}</td>
-                                        <td>{{ evidence.notes }}</td>
-                                        <td>
-                                            <form method="POST" action="{{ url_for('delete_evidence_file', evidence_id=evidence.id) }}" class="d-inline">
-                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this file?');">
-                                                    Delete
-                                                </button>
-                                            </form>
-                                        </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h6 class="mb-0">Existing Evidence Files ({{ evidence_files|length }})</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Filename</th>
+                                            <th>Type</th>
+                                            <th>Size</th>
+                                            <th>Date Uploaded</th>
+                                            <th>Notes</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {% for evidence in evidence_files %}
+                                        <tr>
+                                            <td>{{ loop.index }}</td>
+                                            <td>
+                                                <a href="{{ url_for('serve_evidence_file', filename=evidence.file_path.split('/')[-1]) }}" target="_blank">
+                                                    {{ evidence.filename }}
+                                                </a>
+                                            </td>
+                                            <td>{{ evidence.file_type }}</td>
+                                            <td>{{ (evidence.file_size / 1024)|round(1) }} KB</td>
+                                            <td>{{ evidence.uploaded_at | datetime_format }}</td>
+                                            <td>{{ evidence.notes }}</td>
+                                            <td>
+                                                <div class="btn-group" role="group">
+                                                    <a href="{{ url_for('serve_evidence_file', filename=evidence.file_path.split('/')[-1]) }}" 
+                                                       class="btn btn-sm btn-primary" target="_blank">
+                                                        View
+                                                    </a>
+                                                    <form method="POST" action="{{ url_for('delete_evidence_file', evidence_id=evidence.id) }}" class="d-inline">
+                                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this file?');">
+                                                            Delete
+                                                        </button>
+                                                    </form>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                        {% endfor %}
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 {% endif %}
                 
                 <h6>Upload Evidence Files</h6>
+                <p class="text-muted mb-4">Upload evidence you encountered during your research of the prospective member which influenced your Vetting Score and Recommendation. Both positive (i.e., supporting your recommendation) and negative (i.e., information which might support a recommendation other than what you chose) is welcome. Please submit evidence when available, including for Recommendation: Reject situations.</p>
                 <p class="text-muted">Upload up to 5 files as evidence for the vetting process (allowed formats: jpg, jpeg, png, gif, pdf, doc, docx, txt).</p>
                 
-                <div class="mb-3">
+                <button class="btn btn-outline-primary mb-3" type="button" data-bs-toggle="collapse" data-bs-target="#evidenceFilesCollapse" aria-expanded="false" aria-controls="evidenceFilesCollapse">
+                    <i class="fas fa-plus-circle me-2"></i> Add Evidence Files
+                </button>
+                
+                <div class="collapse mb-3" id="evidenceFilesCollapse">
                     <div class="card mb-3">
-                        <div class="card-header bg-light">Evidence File 1</div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>Evidence File 1</span>
+                        </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 {{ form.evidence_file1.label(class="form-label") }}
-                                {{ form.evidence_file1(class="form-control" + (" is-invalid" if form.evidence_file1.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.evidence_file1(class="form-control" + (" is-invalid" if form.evidence_file1.errors else ""), id="evidence_file1") }}
+                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file1">
+                                        Clear File
+                                    </button>
+                                </div>
                                 {% for error in form.evidence_file1.errors %}
-                                    <div class="invalid-feedback">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
                             <div class="mb-0">
@@ -206,13 +234,20 @@
                     </div>
                     
                     <div class="card mb-3">
-                        <div class="card-header bg-light">Evidence File 2</div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>Evidence File 2</span>
+                        </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 {{ form.evidence_file2.label(class="form-label") }}
-                                {{ form.evidence_file2(class="form-control" + (" is-invalid" if form.evidence_file2.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.evidence_file2(class="form-control" + (" is-invalid" if form.evidence_file2.errors else ""), id="evidence_file2") }}
+                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file2">
+                                        Clear File
+                                    </button>
+                                </div>
                                 {% for error in form.evidence_file2.errors %}
-                                    <div class="invalid-feedback">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
                             <div class="mb-0">
@@ -226,13 +261,20 @@
                     </div>
                     
                     <div class="card mb-3">
-                        <div class="card-header bg-light">Evidence File 3</div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>Evidence File 3</span>
+                        </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 {{ form.evidence_file3.label(class="form-label") }}
-                                {{ form.evidence_file3(class="form-control" + (" is-invalid" if form.evidence_file3.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.evidence_file3(class="form-control" + (" is-invalid" if form.evidence_file3.errors else ""), id="evidence_file3") }}
+                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file3">
+                                        Clear File
+                                    </button>
+                                </div>
                                 {% for error in form.evidence_file3.errors %}
-                                    <div class="invalid-feedback">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
                             <div class="mb-0">
@@ -246,13 +288,20 @@
                     </div>
                     
                     <div class="card mb-3">
-                        <div class="card-header bg-light">Evidence File 4</div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>Evidence File 4</span>
+                        </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 {{ form.evidence_file4.label(class="form-label") }}
-                                {{ form.evidence_file4(class="form-control" + (" is-invalid" if form.evidence_file4.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.evidence_file4(class="form-control" + (" is-invalid" if form.evidence_file4.errors else ""), id="evidence_file4") }}
+                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file4">
+                                        Clear File
+                                    </button>
+                                </div>
                                 {% for error in form.evidence_file4.errors %}
-                                    <div class="invalid-feedback">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
                             <div class="mb-0">
@@ -266,13 +315,20 @@
                     </div>
                     
                     <div class="card mb-3">
-                        <div class="card-header bg-light">Evidence File 5</div>
+                        <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                            <span>Evidence File 5</span>
+                        </div>
                         <div class="card-body">
                             <div class="mb-3">
                                 {{ form.evidence_file5.label(class="form-label") }}
-                                {{ form.evidence_file5(class="form-control" + (" is-invalid" if form.evidence_file5.errors else "")) }}
+                                <div class="input-group">
+                                    {{ form.evidence_file5(class="form-control" + (" is-invalid" if form.evidence_file5.errors else ""), id="evidence_file5") }}
+                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file5">
+                                        Clear File
+                                    </button>
+                                </div>
                                 {% for error in form.evidence_file5.errors %}
-                                    <div class="invalid-feedback">{{ error }}</div>
+                                    <div class="invalid-feedback d-block">{{ error }}</div>
                                 {% endfor %}
                             </div>
                             <div class="mb-0">
@@ -332,6 +388,49 @@
                 form.classList.add('was-validated');
             }, false);
         });
+        
+        // Handle clear file buttons
+        const clearButtons = document.querySelectorAll('.clear-file-btn');
+        clearButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                const targetId = this.getAttribute('data-target');
+                const fileInput = document.getElementById(targetId);
+                
+                // Create a new file input element
+                const newFileInput = document.createElement('input');
+                // Copy all attributes from the old input
+                Array.from(fileInput.attributes).forEach(attr => {
+                    if (attr.name !== 'value') {
+                        newFileInput.setAttribute(attr.name, attr.value);
+                    }
+                });
+                // Replace the old input with the new one
+                fileInput.parentNode.replaceChild(newFileInput, fileInput);
+                
+                // Show feedback to the user
+                const feedbackSpan = document.createElement('span');
+                feedbackSpan.className = 'text-success d-block mt-1';
+                feedbackSpan.textContent = 'File cleared';
+                newFileInput.parentNode.appendChild(feedbackSpan);
+                
+                // Remove the feedback message after 2 seconds
+                setTimeout(() => {
+                    if (feedbackSpan.parentNode) {
+                        feedbackSpan.parentNode.removeChild(feedbackSpan);
+                    }
+                }, 2000);
+            });
+        });
+        
+        // Auto-expand evidence section if files are already uploaded
+        {% if editing and evidence_files %}
+            const evidenceCollapse = document.getElementById('evidenceFilesCollapse');
+            if (evidenceCollapse) {
+                const bsCollapse = new bootstrap.Collapse(evidenceCollapse, {
+                    toggle: true
+                });
+            }
+        {% endif %}
     });
 </script>
 {% endblock %}
