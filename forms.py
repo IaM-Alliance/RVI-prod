@@ -1,5 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField, HiddenField
+from flask_wtf.file import FileField, FileAllowed, FileRequired
+from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField, HiddenField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
 from models import User
 
@@ -92,14 +93,36 @@ class VettingFormClass(FlaskForm):
         ('further-verification', 'Request Further Verification')
     ], validators=[Optional()])
     
-    # Security and trust information
-    security_questions_answered = BooleanField('Security Questions Answered')
-    trust_level = SelectField('Trust Level', choices=[
-        ('', 'Select Trust Level'),
-        ('low', 'Low'),
-        ('medium', 'Medium'),
-        ('high', 'High')
-    ], validators=[Optional()])
+    # Vetting Evidence Upload section
+    evidence_file1 = FileField('Evidence File 1', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'], 'Only images, PDFs, and documents are allowed')
+    ])
+    evidence_notes1 = TextAreaField('Evidence 1 Notes', validators=[Optional()])
+    
+    evidence_file2 = FileField('Evidence File 2', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'], 'Only images, PDFs, and documents are allowed')
+    ])
+    evidence_notes2 = TextAreaField('Evidence 2 Notes', validators=[Optional()])
+    
+    evidence_file3 = FileField('Evidence File 3', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'], 'Only images, PDFs, and documents are allowed')
+    ])
+    evidence_notes3 = TextAreaField('Evidence 3 Notes', validators=[Optional()])
+    
+    evidence_file4 = FileField('Evidence File 4', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'], 'Only images, PDFs, and documents are allowed')
+    ])
+    evidence_notes4 = TextAreaField('Evidence 4 Notes', validators=[Optional()])
+    
+    evidence_file5 = FileField('Evidence File 5', validators=[
+        Optional(),
+        FileAllowed(['jpg', 'jpeg', 'png', 'gif', 'pdf', 'doc', 'docx', 'txt'], 'Only images, PDFs, and documents are allowed')
+    ])
+    evidence_notes5 = TextAreaField('Evidence 5 Notes', validators=[Optional()])
     
     # Additional details
     additional_info = TextAreaField('Additional Information', validators=[Optional()])

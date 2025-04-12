@@ -59,6 +59,19 @@ class MatrixToken(db.Model):
     response_data = db.Column(db.Text)  # To store API response
     vetting_form_id = db.Column(db.Integer, db.ForeignKey('vetting_form.id'), nullable=True)
 
+class VettingEvidence(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    vetting_form_id = db.Column(db.Integer, db.ForeignKey('vetting_form.id'), nullable=False)
+    filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(512), nullable=False)
+    file_type = db.Column(db.String(100), nullable=True)
+    file_size = db.Column(db.Integer, nullable=True)  # Size in bytes
+    notes = db.Column(db.Text, nullable=True)
+    uploaded_at = db.Column(db.DateTime, default=datetime.utcnow)
+    
+    def __repr__(self):
+        return f'<VettingEvidence {self.id}: {self.filename}>'
+
 class VettingForm(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -83,11 +96,7 @@ class VettingForm(db.Model):
     vetting_score = db.Column(db.Integer, nullable=True)  # 1-5 score
     recommendation = db.Column(db.String(20), nullable=True)  # approve, reject, further-verification
     
-    # Security and trust information
-    security_questions_answered = db.Column(db.Boolean, default=False)
-    trust_level = db.Column(db.String(20), nullable=True)  # low, medium, high
-    
-    # Additional details
+    # Additional details (removed Security and trust information)
     additional_info = db.Column(db.Text, nullable=True)
     
     # Approval information
@@ -99,6 +108,7 @@ class VettingForm(db.Model):
                              foreign_keys=[approved_by], 
                              backref=db.backref('approved_forms', lazy=True))
     matrix_tokens = db.relationship('MatrixToken', backref='vetting_form', lazy=True)
+    evidence_files = db.relationship('VettingEvidence', backref='vetting_form', lazy=True, cascade='all, delete-orphan')
     
     def __repr__(self):
         return f'<VettingForm {self.id}: {self.full_name}>'
