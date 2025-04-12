@@ -24,15 +24,19 @@
                 <h5 class="card-title mb-0">Registration Details</h5>
             </div>
             <div class="card-body">
-                <div class="alert alert-info">
-                    <h5 class="alert-heading"><i class="fas fa-info-circle me-2"></i>What happens next?</h5>
-                    <p>When you submit this form:</p>
-                    <ol>
-                        <li>A unique registration token will be generated</li>
-                        <li>The token will be sent to the Matrix API</li>
-                        <li>The system will log your submission for audit purposes</li>
-                        <li>You'll be able to view the generated token in your dashboard</li>
-                    </ol>
+                <div class="card mb-4">
+                    <div class="card-header bg-info">
+                        <h5 class="card-title mb-0 text-dark"><i class="fas fa-info-circle me-2"></i>What happens next?</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>When you submit this form:</p>
+                        <ol>
+                            <li>A unique registration token will be generated</li>
+                            <li>The token will be sent to the Matrix API</li>
+                            <li>The system will log your submission for audit purposes</li>
+                            <li>You'll be able to view the generated token in your dashboard</li>
+                        </ol>
+                    </div>
                 </div>
                 
                 <form method="POST" action="{{ url_for('matrix_form') }}">
