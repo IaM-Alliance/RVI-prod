@@ -88,6 +88,56 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     """
     
     send_email(user_email, user_subject, user_body)
+    
+    
+def send_token_notification(admin_email, admin_name, full_name, email, assigned_username, token, expiry_date, vetting_info):
+    """Send notification email to admin with token and vetting information."""
+    subject = f"Matrix Registration Token for {full_name}"
+    
+    verification_info = f"Verification method: {vetting_info.get('verification_method', 'Not specified')}\n"
+    if vetting_info.get('verification_date'):
+        verification_info += f"Verification date: {vetting_info.get('verification_date')}\n"
+    verification_info += f"Verification location: {vetting_info.get('verification_location', 'Not specified')}"
+    
+    vetting_info_text = f"""
+Vetting Score: {vetting_info.get('vetting_score', 'Not specified')}
+Vetting Notes: {vetting_info.get('vetting_notes', 'None')}
+"""
+    
+    body = f"""
+Hello {admin_name},
+
+A Matrix registration token has been generated for an approved applicant:
+
+APPLICANT INFORMATION:
+Full Name: {full_name}
+Email: {email}
+Assigned Username: {assigned_username}
+
+VETTING DETAILS:
+{verification_info}
+{vetting_info_text}
+
+TOKEN INFORMATION:
+Token: {token}
+Expiry Date: {expiry_date}
+
+NEXT STEPS:
+This token is ready for the approved new member to use. 
+
+1. First, please send the person a Signal message - or an email if the person is not available on Signal - informing them that they are approved as a new member of IaM-Alliance. 
+
+2. In that message, include the Assigned Username (with the caveat that if they do not use the assigned username, their account may be deleted and replaced). 
+
+3. The message should also include a link to the FAQs and User Guide for the Element chat client application, and a link to element.iam-alliance.com.
+
+4. IN A SEPARATE NEW MESSAGE: Please provide the token to the person via a Signal message - or an email if the person is not available on Signal. In the second message, include only the token and expiration date of the token.
+
+Regards,
+IaM-Alliance System
+"""
+    
+    return send_email(admin_email, subject, body)
 
 import requests
 import time

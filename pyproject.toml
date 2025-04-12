@@ -16,4 +16,5 @@ dependencies = [
     "wtforms>=3.2.1",
     "markupsafe>=3.0.2",
     "requests>=2.32.3",
+    "sendgrid>=6.11.0",
 ]
