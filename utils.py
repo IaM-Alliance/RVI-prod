@@ -181,10 +181,10 @@ def matrix_api_post(user_fullname, user_email, assigned_username):
     try:
         # Endpoint to create a new token (without specifying token value)
         api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/new"
-        bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
+        bearer_token = os.environ.get('MATRIX_ADMIN_TOKEN')
         
         if not bearer_token:
-            logger.error("MATRIX_API_BEARER_TOKEN environment variable not set")
+            logger.error("MATRIX_ADMIN_TOKEN environment variable not set")
             return {
                 "success": False,
                 "error": "API Bearer Token not configured",
@@ -254,22 +254,23 @@ def matrix_api_post(user_fullname, user_email, assigned_username):
     
 def get_matrix_token_info(token):
     """
-    Get information about a specific Matrix token.
+    Get information about a specific Matrix token from the Matrix API.
+    Returns status of token including usage (pending/completed) based on Matrix API documentation.
     """
     try:
-        # Matching the same API endpoint structure
+        # Matching the same API endpoint structure shown in the documentation
         api_url = f"https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/{token}"
-        bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
+        bearer_token = os.environ.get('MATRIX_ADMIN_TOKEN')
         
         if not bearer_token:
-            logger.error("MATRIX_API_BEARER_TOKEN environment variable not set")
+            logger.error("MATRIX_ADMIN_TOKEN environment variable not set")
             return {
                 "success": False,
                 "error": "API Bearer Token not configured",
                 "response": None
             }
         
-        # Make the API request with the same headers as in the working example
+        # Make the API request with the appropriate headers
         response = requests.get(
             api_url,
             headers={
@@ -281,9 +282,13 @@ def get_matrix_token_info(token):
         
         # Parse the response
         if response.status_code == 200:
+            response_data = response.json()
+            
+            # API returns token details with usage status: pending, completed, uses_allowed, expiry_time
             return {
                 "success": True,
-                "response": response.json()
+                "response": response_data,
+                "timestamp": datetime.utcnow().isoformat() + 'Z'  # ISO 8601 format
             }
         else:
             # Log error details

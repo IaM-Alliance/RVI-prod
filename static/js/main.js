@@ -28,12 +28,16 @@ function initializePasswordToggle() {
 }
 
 function initializeDataTables() {
-    // Initialize DataTables if the library is loaded
-    if (typeof $.fn.DataTable !== 'undefined') {
-        $('.data-table').DataTable({
+    // Initialize DataTables if the library is loaded and jQuery is available
+    if (typeof jQuery !== 'undefined' && typeof jQuery.fn.DataTable !== 'undefined') {
+        jQuery('.data-table').DataTable({
             responsive: true,
             order: [[0, 'desc']]
         });
+    } else if (typeof jQuery === 'undefined') {
+        console.warn('jQuery is not loaded, DataTables initialization skipped');
+    } else if (typeof jQuery.fn.DataTable === 'undefined') {
+        console.warn('DataTables library is not loaded, initialization skipped');
     }
 }
 
@@ -60,11 +64,40 @@ function confirmAction(message, callback) {
 
 // Function to copy text to clipboard
 function copyToClipboard(text) {
-    navigator.clipboard.writeText(text)
-        .then(() => {
-            alert('Copied to clipboard!');
-        })
-        .catch(err => {
-            console.error('Error copying text: ', err);
-        });
+    // Check if Clipboard API is available
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(text)
+            .then(() => {
+                alert('Copied to clipboard!');
+            })
+            .catch(err => {
+                console.error('Error copying text: ', err);
+                fallbackCopyToClipboard(text);
+            });
+    } else {
+        fallbackCopyToClipboard(text);
+    }
+}
+
+// Fallback method for copying to clipboard using a temporary input element
+function fallbackCopyToClipboard(text) {
+    try {
+        // Create a temporary input element
+        const input = document.createElement('input');
+        input.setAttribute('value', text);
+        document.body.appendChild(input);
+        
+        // Select and copy the text
+        input.select();
+        document.execCommand('copy');
+        
+        // Remove the temporary element
+        document.body.removeChild(input);
+        
+        // Show success message
+        alert('Copied to clipboard!');
+    } catch (err) {
+        console.error('Fallback: Error copying text to clipboard', err);
+        alert('Could not copy text: ' + text);
+    }
 }

@@ -877,6 +877,7 @@ def token_list():
     
     # For each token, get the latest usage status from the Matrix API
     from utils import get_matrix_token_info
+    import time
     
     token_statuses = {}
     for token_record in tokens:
@@ -899,7 +900,13 @@ def token_list():
                 'completed': None
             }
     
-    return render_template('admin/token_list.html', tokens=tokens, token_statuses=token_statuses)
+    # Pass current time to template for expiry checking
+    current_time = int(time.time())
+    
+    return render_template('admin/token_list.html', 
+                          tokens=tokens, 
+                          token_statuses=token_statuses,
+                          now=current_time)
 
 @app.route('/agent/matrix-form', methods=['GET', 'POST'])
 @login_required
