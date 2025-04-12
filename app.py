@@ -234,12 +234,52 @@ def change_password():
     
     return render_template('change_password.html', form=form)
 
-# File serving route
+# File routes
 @app.route('/uploads/evidence/<filename>')
 @login_required
 def serve_evidence_file(filename):
     """Serve an evidence file securely"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
+
+@app.route('/agent/evidence/<int:evidence_id>/delete', methods=['POST'])
+@login_required
+def delete_evidence_file(evidence_id):
+    """Delete an evidence file"""
+    evidence = VettingEvidence.query.get_or_404(evidence_id)
+    
+    # Verify ownership or admin rights
+    vetting_form = VettingForm.query.get(evidence.vetting_form_id)
+    if not vetting_form or (vetting_form.user_id != current_user.id and not current_user.is_server_admin()):
+        abort(403)
+    
+    # Check if the form is editable
+    if vetting_form.status in ['approved', 'rejected']:
+        flash('You cannot delete evidence from a processed form.', 'warning')
+        return redirect(url_for('edit_vetting_form', form_id=evidence.vetting_form_id))
+    
+    # Delete the file from filesystem
+    try:
+        if os.path.exists(evidence.file_path):
+            os.remove(evidence.file_path)
+    except Exception as e:
+        logger.error(f"Error deleting file: {str(e)}")
+    
+    # Log the deletion
+    log_entry = AuditLog(
+        user_id=current_user.id,
+        action="evidence_deleted",
+        details=f"Deleted evidence file: {evidence.filename} from vetting form ID: {evidence.vetting_form_id}",
+        ip_address=request.remote_addr
+    )
+    db.session.add(log_entry)
+    
+    # Delete the database record
+    form_id = evidence.vetting_form_id
+    db.session.delete(evidence)
+    db.session.commit()
+    
+    flash(f'Evidence file "{evidence.filename}" deleted successfully.', 'success')
+    return redirect(url_for('edit_vetting_form', form_id=form_id))
 
 # Admin Routes
 @app.route('/admin/dashboard')
@@ -605,29 +645,66 @@ def vetting_form():
             vetting_notes=form.vetting_notes.data,
             vetting_score=int(form.vetting_score.data) if form.vetting_score.data else None,
             recommendation=form.recommendation.data,
-            security_questions_answered=form.security_questions_answered.data,
-            trust_level=form.trust_level.data,
             additional_info=form.additional_info.data,
             status='draft' if 'save_draft' in request.form else 'submitted'
         )
         
         db.session.add(new_form_record)
+        db.session.commit()  # Commit to get the ID for evidence files
+        
+        # Process uploaded evidence files
+        evidence_files_uploaded = 0
+        
+        # Process up to 5 evidence files
+        if form.evidence_file1.data:
+            evidence = save_evidence_file(form.evidence_file1.data, new_form_record.id, form.evidence_notes1.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file2.data:
+            evidence = save_evidence_file(form.evidence_file2.data, new_form_record.id, form.evidence_notes2.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file3.data:
+            evidence = save_evidence_file(form.evidence_file3.data, new_form_record.id, form.evidence_notes3.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file4.data:
+            evidence = save_evidence_file(form.evidence_file4.data, new_form_record.id, form.evidence_notes4.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file5.data:
+            evidence = save_evidence_file(form.evidence_file5.data, new_form_record.id, form.evidence_notes5.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
         
         # Log the form submission
         action = "vetting_form_draft" if 'save_draft' in request.form else "vetting_form_submitted"
+        details = f"Vetting form for {form.full_name.data} ({form.email.data}) {'saved as draft' if 'save_draft' in request.form else 'submitted'}"
+        if evidence_files_uploaded > 0:
+            details += f" with {evidence_files_uploaded} evidence file(s)"
+            
         log_entry = AuditLog(
             user_id=current_user.id,
             action=action,
-            details=f"Vetting form for {form.full_name.data} ({form.email.data}) {'saved as draft' if 'save_draft' in request.form else 'submitted'}",
+            details=details,
             ip_address=request.remote_addr
         )
         db.session.add(log_entry)
         db.session.commit()
         
         if 'save_draft' in request.form:
-            flash('Vetting form saved as draft.', 'info')
+            flash(f'Vetting form saved as draft with {evidence_files_uploaded} evidence file(s).', 'info')
         else:
-            flash('Vetting form submitted successfully.', 'success')
+            flash(f'Vetting form submitted successfully with {evidence_files_uploaded} evidence file(s).', 'success')
         
         return redirect(url_for('agent_dashboard'))
     
@@ -667,8 +744,6 @@ def edit_vetting_form(form_id):
         vetting_form_record.vetting_notes = form.vetting_notes.data
         vetting_form_record.vetting_score = int(form.vetting_score.data) if form.vetting_score.data else None
         vetting_form_record.recommendation = form.recommendation.data
-        vetting_form_record.security_questions_answered = form.security_questions_answered.data
-        vetting_form_record.trust_level = form.trust_level.data
         vetting_form_record.additional_info = form.additional_info.data
         
         if 'save_draft' in request.form:
@@ -676,25 +751,68 @@ def edit_vetting_form(form_id):
         elif 'submit' in request.form and vetting_form_record.status == 'draft':
             vetting_form_record.status = 'submitted'
         
+        db.session.commit()  # Commit changes to the form
+        
+        # Process uploaded evidence files
+        evidence_files_uploaded = 0
+        
+        # Process up to 5 evidence files
+        if form.evidence_file1.data:
+            evidence = save_evidence_file(form.evidence_file1.data, vetting_form_record.id, form.evidence_notes1.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file2.data:
+            evidence = save_evidence_file(form.evidence_file2.data, vetting_form_record.id, form.evidence_notes2.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file3.data:
+            evidence = save_evidence_file(form.evidence_file3.data, vetting_form_record.id, form.evidence_notes3.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file4.data:
+            evidence = save_evidence_file(form.evidence_file4.data, vetting_form_record.id, form.evidence_notes4.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+                
+        if form.evidence_file5.data:
+            evidence = save_evidence_file(form.evidence_file5.data, vetting_form_record.id, form.evidence_notes5.data)
+            if evidence:
+                db.session.add(evidence)
+                evidence_files_uploaded += 1
+        
         # Log the form update
         action = "vetting_form_updated"
+        details = f"Vetting form for {form.full_name.data} ({form.email.data}) updated"
+        if evidence_files_uploaded > 0:
+            details += f" with {evidence_files_uploaded} new evidence file(s)"
+            
         log_entry = AuditLog(
             user_id=current_user.id,
             action=action,
-            details=f"Vetting form for {form.full_name.data} ({form.email.data}) updated",
+            details=details,
             ip_address=request.remote_addr
         )
         db.session.add(log_entry)
         db.session.commit()
         
         if 'save_draft' in request.form:
-            flash('Vetting form saved as draft.', 'info')
+            flash(f'Vetting form saved as draft with {evidence_files_uploaded} new evidence file(s).', 'info')
         else:
-            flash('Vetting form updated successfully.', 'success')
+            flash(f'Vetting form updated successfully with {evidence_files_uploaded} new evidence file(s).', 'success')
         
         return redirect(url_for('agent_dashboard'))
     
-    return render_template('agent/vetting_form.html', form=form, editing=True, form_id=form_id)
+    # Get existing evidence files
+    evidence_files = VettingEvidence.query.filter_by(vetting_form_id=form_id).all()
+    
+    return render_template('agent/vetting_form.html', form=form, editing=True, form_id=form_id, evidence_files=evidence_files)
 
 # Error handlers
 @app.errorhandler(403)

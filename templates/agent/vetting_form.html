@@ -6,7 +6,7 @@
 <div class="container py-4">
     <h1 class="mb-4">{% if editing %}Edit{% else %}New{% endif %} Vetting Form</h1>
     
-    <form method="POST" class="needs-validation" novalidate>
+    <form method="POST" class="needs-validation" enctype="multipart/form-data" novalidate>
         {{ form.hidden_tag() }}
         
         <div class="card mb-4">
@@ -140,23 +140,148 @@
         
         <div class="card mb-4">
             <div class="card-header">
-                <h5 class="mb-0">Security & Trust</h5>
+                <h5 class="mb-0">Vetting Evidence</h5>
             </div>
             <div class="card-body">
-                <div class="row g-3">
-                    <div class="col-md-6">
-                        <div class="form-check mb-3">
-                            {{ form.security_questions_answered(class="form-check-input") }}
-                            {{ form.security_questions_answered.label(class="form-check-label") }}
+                {% if editing and evidence_files %}
+                    <div class="mb-4">
+                        <h6>Existing Evidence Files</h6>
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Filename</th>
+                                        <th>Date Uploaded</th>
+                                        <th>Notes</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for evidence in evidence_files %}
+                                    <tr>
+                                        <td>
+                                            <a href="{{ url_for('serve_evidence_file', filename=evidence.file_path.split('/')[-1]) }}" target="_blank">
+                                                {{ evidence.filename }}
+                                            </a>
+                                        </td>
+                                        <td>{{ evidence.uploaded_at | datetime_format }}</td>
+                                        <td>{{ evidence.notes }}</td>
+                                        <td>
+                                            <form method="POST" action="{{ url_for('delete_evidence_file', evidence_id=evidence.id) }}" class="d-inline">
+                                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this file?');">
+                                                    Delete
+                                                </button>
+                                            </form>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
                         </div>
                     </div>
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            {{ form.trust_level.label(class="form-label") }}
-                            {{ form.trust_level(class="form-select" + (" is-invalid" if form.trust_level.errors else "")) }}
-                            {% for error in form.trust_level.errors %}
-                                <div class="invalid-feedback">{{ error }}</div>
-                            {% endfor %}
+                {% endif %}
+                
+                <h6>Upload Evidence Files</h6>
+                <p class="text-muted">Upload up to 5 files as evidence for the vetting process (allowed formats: jpg, jpeg, png, gif, pdf, doc, docx, txt).</p>
+                
+                <div class="mb-3">
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">Evidence File 1</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.evidence_file1.label(class="form-label") }}
+                                {{ form.evidence_file1(class="form-control" + (" is-invalid" if form.evidence_file1.errors else "")) }}
+                                {% for error in form.evidence_file1.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.evidence_notes1.label(class="form-label") }}
+                                {{ form.evidence_notes1(class="form-control" + (" is-invalid" if form.evidence_notes1.errors else ""), rows=2) }}
+                                {% for error in form.evidence_notes1.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">Evidence File 2</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.evidence_file2.label(class="form-label") }}
+                                {{ form.evidence_file2(class="form-control" + (" is-invalid" if form.evidence_file2.errors else "")) }}
+                                {% for error in form.evidence_file2.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.evidence_notes2.label(class="form-label") }}
+                                {{ form.evidence_notes2(class="form-control" + (" is-invalid" if form.evidence_notes2.errors else ""), rows=2) }}
+                                {% for error in form.evidence_notes2.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">Evidence File 3</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.evidence_file3.label(class="form-label") }}
+                                {{ form.evidence_file3(class="form-control" + (" is-invalid" if form.evidence_file3.errors else "")) }}
+                                {% for error in form.evidence_file3.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.evidence_notes3.label(class="form-label") }}
+                                {{ form.evidence_notes3(class="form-control" + (" is-invalid" if form.evidence_notes3.errors else ""), rows=2) }}
+                                {% for error in form.evidence_notes3.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">Evidence File 4</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.evidence_file4.label(class="form-label") }}
+                                {{ form.evidence_file4(class="form-control" + (" is-invalid" if form.evidence_file4.errors else "")) }}
+                                {% for error in form.evidence_file4.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.evidence_notes4.label(class="form-label") }}
+                                {{ form.evidence_notes4(class="form-control" + (" is-invalid" if form.evidence_notes4.errors else ""), rows=2) }}
+                                {% for error in form.evidence_notes4.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card mb-3">
+                        <div class="card-header bg-light">Evidence File 5</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                {{ form.evidence_file5.label(class="form-label") }}
+                                {{ form.evidence_file5(class="form-control" + (" is-invalid" if form.evidence_file5.errors else "")) }}
+                                {% for error in form.evidence_file5.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
+                            <div class="mb-0">
+                                {{ form.evidence_notes5.label(class="form-label") }}
+                                {{ form.evidence_notes5(class="form-control" + (" is-invalid" if form.evidence_notes5.errors else ""), rows=2) }}
+                                {% for error in form.evidence_notes5.errors %}
+                                    <div class="invalid-feedback">{{ error }}</div>
+                                {% endfor %}
+                            </div>
                         </div>
                     </div>
                 </div>
