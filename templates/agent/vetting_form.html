@@ -215,7 +215,7 @@
                                 {{ form.evidence_file1.label(class="form-label") }}
                                 <div class="input-group">
                                     {{ form.evidence_file1(class="form-control" + (" is-invalid" if form.evidence_file1.errors else ""), id="evidence_file1") }}
-                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file1">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('evidence_file1').value = ''; alert('File cleared');">
                                         Clear File
                                     </button>
                                 </div>
@@ -242,7 +242,7 @@
                                 {{ form.evidence_file2.label(class="form-label") }}
                                 <div class="input-group">
                                     {{ form.evidence_file2(class="form-control" + (" is-invalid" if form.evidence_file2.errors else ""), id="evidence_file2") }}
-                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file2">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('evidence_file2').value = ''; alert('File cleared');">
                                         Clear File
                                     </button>
                                 </div>
@@ -269,7 +269,7 @@
                                 {{ form.evidence_file3.label(class="form-label") }}
                                 <div class="input-group">
                                     {{ form.evidence_file3(class="form-control" + (" is-invalid" if form.evidence_file3.errors else ""), id="evidence_file3") }}
-                                    <button type="button" class="btn btn-outline-secondary clear-file-btn" data-target="evidence_file3">
+                                    <button type="button" class="btn btn-outline-secondary" onclick="document.getElementById('evidence_file3').value = ''; alert('File cleared');">
                                         Clear File
                                     </button>
                                 </div>
