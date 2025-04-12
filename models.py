@@ -33,12 +33,23 @@ class User(UserMixin, db.Model):
     def is_server_admin(self):
         return self.role == 'server_admin' or self.is_superadmin()
     
-    def is_vetting_agent(self):
-        # Only returns true for vetting agents specifically, not for admins
-        return self.role == 'vetting_agent'
-    
     def is_inviting_admin(self):
-        return self.role == 'inviting_admin' or self.is_superadmin() or self.is_server_admin()
+        return self.role == 'inviting_admin' or self.is_server_admin() or self.is_superadmin()
+    
+    def is_vetting_agent(self):
+        # All users have at least vetting agent permissions
+        return True
+        
+    def get_highest_role(self):
+        """Return the user's highest role for UI display"""
+        if self.is_superadmin():
+            return 'superadmin'
+        elif self.is_server_admin():
+            return 'server_admin'
+        elif self.is_inviting_admin():
+            return 'inviting_admin'
+        else:
+            return 'vetting_agent'
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -82,7 +93,7 @@ class VettingForm(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    status = db.Column(db.String(20), default='draft')  # draft, submitted, approved, rejected
+    status = db.Column(db.String(20), default='draft')  # draft, submitted, approved, rejected, awaiting_token
     
     # Person details
     full_name = db.Column(db.String(120), nullable=False)
