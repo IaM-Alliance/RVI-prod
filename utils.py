@@ -89,55 +89,137 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     
     send_email(user_email, user_subject, user_body)
 
-def matrix_api_post(token, user_fullname, user_email):
+import requests
+import time
+import json
+from datetime import datetime, timedelta
+
+def matrix_api_post(token, user_fullname, user_email, assigned_username):
     """
-    Post a registration token to the Matrix API.
-    In a production environment, this would be implemented to make the actual API call.
-    """
-    # This is a placeholder for the actual API implementation
-    # In a real implementation, we would import requests and make a POST request
-    
-    api_url = "https://matrix.iam-alliance.com"
-    
-    # The actual API implementation would look something like this:
+    Register a new token with the Matrix API.
     """
     try:
-        response = requests.post(
+        api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/new"
+        bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
+        
+        if not bearer_token:
+            logger.error("MATRIX_API_BEARER_TOKEN environment variable not set")
+            return {
+                "success": False,
+                "error": "API Bearer Token not configured",
+                "response": None
+            }
+        
+        # Calculate expiry time (30 days from now in milliseconds since epoch)
+        expiry_time_seconds = int(time.time()) + (30 * 24 * 60 * 60)  # 30 days in seconds
+        expiry_time_ms = expiry_time_seconds * 1000  # Convert to milliseconds
+        
+        # Prepare request data
+        request_data = {
+            "token": token,
+            "uses_allowed": 1,
+            "expiry_time": expiry_time_ms
+        }
+        
+        # Make the API request
+        response = requests.put(
             api_url,
-            json={
-                "token": token,
-                "fullname": user_fullname,
-                "email": user_email
-            },
+            json=request_data,
             headers={
-                "Authorization": f"Bearer {os.environ.get('MATRIX_API_KEY')}"
+                "Authorization": f"Bearer {bearer_token}",
+                "Content-Type": "application/json"
             },
             timeout=10
         )
         
+        # Parse the response
         if response.status_code == 200:
+            response_data = response.json()
+            
+            # Calculate the expiry date in the format YYYY-MMM-DD
+            # Subtract 48 hours (172800 seconds) from the expiry time as specified
+            adjusted_expiry_time = expiry_time_seconds - 172800
+            expiry_date = datetime.fromtimestamp(adjusted_expiry_time).strftime('%Y-%b-%d')
+            
+            # Return success response with parsed data
             return {
                 "success": True,
-                "response": response.json()
+                "response": response_data,
+                "expiry_time": expiry_time_ms,
+                "expiry_date": expiry_date,
+                "response_timestamp": datetime.utcnow().isoformat() + 'Z'  # ISO 8601 format with Z for UTC
             }
         else:
+            # Log error details
+            logger.error(f"Matrix API error: {response.status_code}, Response: {response.text}")
+            
+            # Return error response
             return {
                 "success": False,
                 "error": f"API returned status code {response.status_code}",
                 "response": response.text
             }
     except Exception as e:
+        # Log exception
+        logger.error(f"Exception in matrix_api_post: {str(e)}", exc_info=True)
+        
+        # Return exception details
         return {
             "success": False,
-            "error": str(e)
+            "error": str(e),
+            "response": None
         }
-    """
     
-    # For now, just return a successful response
-    return {
-        "success": True,
-        "response": {
-            "status": "registered",
-            "message": "User registration submitted successfully"
+    
+def get_matrix_token_info(token):
+    """
+    Get information about a specific Matrix token.
+    """
+    try:
+        api_url = f"https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/{token}"
+        bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
+        
+        if not bearer_token:
+            logger.error("MATRIX_API_BEARER_TOKEN environment variable not set")
+            return {
+                "success": False,
+                "error": "API Bearer Token not configured",
+                "response": None
+            }
+        
+        # Make the API request
+        response = requests.get(
+            api_url,
+            headers={
+                "Authorization": f"Bearer {bearer_token}",
+                "Content-Type": "application/json"
+            },
+            timeout=10
+        )
+        
+        # Parse the response
+        if response.status_code == 200:
+            return {
+                "success": True,
+                "response": response.json()
+            }
+        else:
+            # Log error details
+            logger.error(f"Matrix API error: {response.status_code}, Response: {response.text}")
+            
+            # Return error response
+            return {
+                "success": False,
+                "error": f"API returned status code {response.status_code}",
+                "response": response.text
+            }
+    except Exception as e:
+        # Log exception
+        logger.error(f"Exception in get_matrix_token_info: {str(e)}", exc_info=True)
+        
+        # Return exception details
+        return {
+            "success": False,
+            "error": str(e),
+            "response": None
         }
-    }
