@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField, HiddenField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
-from models import User
+from models import User, UserPreferences
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])
@@ -134,3 +134,168 @@ class VettingFormClass(FlaskForm):
     # Submission buttons
     save_draft = SubmitField('Save as Draft')
     submit = SubmitField('Submit for Review')
+
+class UserPreferencesForm(FlaskForm):
+    theme = SelectField('Theme', choices=[
+        ('dark', 'Dark Mode'),
+        ('light', 'Light Mode')
+    ], validators=[DataRequired()])
+    
+    # Token Status Colors
+    token_available_color = SelectField('Available Token Color', choices=[
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow'),
+        ('bg-danger', 'Red')
+    ], validators=[DataRequired()])
+    
+    token_used_color = SelectField('Used Token Color', choices=[
+        ('bg-success', 'Green'),
+        ('bg-info', 'Blue'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow'),
+        ('bg-danger', 'Red')
+    ], validators=[DataRequired()])
+    
+    token_pending_color = SelectField('Pending Token Color', choices=[
+        ('bg-warning text-dark', 'Yellow'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-danger', 'Red')
+    ], validators=[DataRequired()])
+    
+    token_expired_color = SelectField('Expired Token Color', choices=[
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    token_error_color = SelectField('Error Token Color', choices=[
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    # User Role Colors
+    superadmin_color = SelectField('Superadmin Role Color', choices=[
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    server_admin_color = SelectField('Server Admin Role Color', choices=[
+        ('bg-warning text-dark', 'Yellow'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark')
+    ], validators=[DataRequired()])
+    
+    inviting_admin_color = SelectField('Inviting Admin Role Color', choices=[
+        ('bg-primary', 'Indigo'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    vetting_agent_color = SelectField('Vetting Agent Role Color', choices=[
+        ('bg-info', 'Blue'),
+        ('bg-danger', 'Red'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    # Form Status Colors
+    active_status_color = SelectField('Active Status Color', choices=[
+        ('bg-success', 'Green'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    pending_status_color = SelectField('Pending Status Color', choices=[
+        ('bg-warning text-dark', 'Yellow'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark')
+    ], validators=[DataRequired()])
+    
+    awaiting_token_status_color = SelectField('Awaiting Token Status Color', choices=[
+        ('bg-info', 'Blue'),
+        ('bg-danger', 'Red'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    rejected_status_color = SelectField('Rejected Status Color', choices=[
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    draft_status_color = SelectField('Draft Status Color', choices=[
+        ('bg-secondary', 'Gray'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-primary', 'Indigo'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    submitted_status_color = SelectField('Submitted Status Color', choices=[
+        ('bg-primary', 'Indigo'),
+        ('bg-danger', 'Red'),
+        ('bg-info', 'Blue'),
+        ('bg-success', 'Green'),
+        ('bg-secondary', 'Gray'),
+        ('bg-dark', 'Dark'),
+        ('bg-warning text-dark', 'Yellow')
+    ], validators=[DataRequired()])
+    
+    # Animation Options
+    animation_enabled = BooleanField('Enable Animations', default=True)
+    tooltip_enabled = BooleanField('Enable Tooltips', default=True)
+    
+    submit = SubmitField('Save Preferences')

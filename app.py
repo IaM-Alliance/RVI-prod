@@ -101,7 +101,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Import forms
-from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingFormClass
+from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingFormClass, UserPreferencesForm
 
 from utils import generate_random_password, send_account_notification
 
