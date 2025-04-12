@@ -96,7 +96,9 @@
                             <tr>
                                 <th>Time</th>
                                 <th>Created By</th>
+                                <th>Assigned Username</th>
                                 <th>Status</th>
+                                <th>Expiry</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -104,13 +106,21 @@
                                 <tr>
                                     <td>{{ token.created_at|datetime_format }}</td>
                                     <td>{{ token.creator.username }}</td>
+                                    <td>{{ token.assigned_username }}</td>
                                     <td>
                                         <span class="token-status {{ token.status }}">{{ token.status|upper }}</span>
+                                    </td>
+                                    <td>
+                                        {% if token.expiry_date %}
+                                            {{ token.expiry_date }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
                                     </td>
                                 </tr>
                             {% else %}
                                 <tr>
-                                    <td colspan="3" class="text-center">No tokens generated yet</td>
+                                    <td colspan="5" class="text-center">No tokens generated yet</td>
                                 </tr>
                             {% endfor %}
                         </tbody>
