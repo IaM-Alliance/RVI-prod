@@ -241,6 +241,29 @@ def serve_evidence_file(filename):
     """Serve an evidence file securely"""
     return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
+@app.route('/agent/evidence/<int:evidence_id>/info', methods=['GET'])
+@login_required
+def evidence_info(evidence_id):
+    """Debug information about an evidence file"""
+    evidence = VettingEvidence.query.get_or_404(evidence_id)
+    vetting_form = VettingForm.query.get(evidence.vetting_form_id)
+    
+    if not vetting_form or (vetting_form.user_id != current_user.id and not current_user.is_server_admin()):
+        abort(403)
+    
+    info = {
+        'id': evidence.id,
+        'filename': evidence.filename,
+        'vetting_form_id': evidence.vetting_form_id,
+        'file_path': evidence.file_path,
+        'exists': os.path.exists(evidence.file_path),
+        'form_status': vetting_form.status,
+        'user_is_owner': vetting_form.user_id == current_user.id,
+        'user_is_admin': current_user.is_server_admin()
+    }
+    
+    return jsonify(info)
+
 @app.route('/agent/evidence/<int:evidence_id>/delete', methods=['POST'])
 @login_required
 def delete_evidence_file(evidence_id):
@@ -268,7 +291,7 @@ def delete_evidence_file(evidence_id):
     log_entry = AuditLog(
         user_id=current_user.id,
         action="evidence_deleted",
-        details=f"Deleted evidence file: {evidence.filename} from vetting form ID: {evidence.vetting_form_id}",
+        details=f"Deleted evidence file: {evidence.filename} from vetting form ID: {evidence.vetting_form_id} (ID: {evidence.id})",
         ip_address=request.remote_addr
     )
     db.session.add(log_entry)
