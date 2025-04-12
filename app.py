@@ -2,7 +2,7 @@ import os
 import logging
 import uuid
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash, request, abort, send_from_directory
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, send_from_directory, jsonify
 from markupsafe import Markup
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
@@ -268,11 +268,23 @@ def evidence_info(evidence_id):
 @login_required
 def delete_evidence_file(evidence_id):
     """Delete an evidence file"""
+    # Log the request for debugging
+    logger.debug(f"Delete request for evidence ID: {evidence_id}")
+    logger.debug(f"POST data: {request.form}")
+    
     evidence = VettingEvidence.query.get_or_404(evidence_id)
+    logger.debug(f"Found evidence record: ID={evidence.id}, File={evidence.filename}")
     
     # Verify ownership or admin rights
     vetting_form = VettingForm.query.get(evidence.vetting_form_id)
-    if not vetting_form or (vetting_form.user_id != current_user.id and not current_user.is_server_admin()):
+    if not vetting_form:
+        logger.error(f"Vetting form not found for ID: {evidence.vetting_form_id}")
+        abort(404)
+        
+    logger.debug(f"Vetting form: ID={vetting_form.id}, User={vetting_form.user_id}, Current user={current_user.id}")
+    
+    if vetting_form.user_id != current_user.id and not current_user.is_server_admin():
+        logger.warning(f"Permission denied for user {current_user.id} to delete evidence {evidence_id}")
         abort(403)
     
     # Check if the form is editable
@@ -283,7 +295,10 @@ def delete_evidence_file(evidence_id):
     # Delete the file from filesystem
     try:
         if os.path.exists(evidence.file_path):
+            logger.debug(f"Removing file from disk: {evidence.file_path}")
             os.remove(evidence.file_path)
+        else:
+            logger.warning(f"File not found on disk: {evidence.file_path}")
     except Exception as e:
         logger.error(f"Error deleting file: {str(e)}")
     
@@ -298,8 +313,16 @@ def delete_evidence_file(evidence_id):
     
     # Delete the database record
     form_id = evidence.vetting_form_id
-    db.session.delete(evidence)
-    db.session.commit()
+    try:
+        logger.debug(f"Deleting evidence record from database: {evidence.id}")
+        db.session.delete(evidence)
+        db.session.commit()
+        logger.debug("Database commit successful")
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Database error during deletion: {str(e)}")
+        flash(f'Error deleting file: {str(e)}', 'danger')
+        return redirect(url_for('edit_vetting_form', form_id=form_id))
     
     flash(f'Evidence file "{evidence.filename}" deleted successfully.', 'success')
     return redirect(url_for('edit_vetting_form', form_id=form_id))
