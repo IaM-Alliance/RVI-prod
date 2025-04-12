@@ -53,10 +53,15 @@ class MatrixToken(db.Model):
     token = db.Column(db.String(64), unique=True, nullable=False)
     user_fullname = db.Column(db.String(120), nullable=False)
     user_email = db.Column(db.String(120), nullable=False)
+    assigned_username = db.Column(db.String(120), nullable=False)  # Required username assigned to the user
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, submitted, failed
-    response_data = db.Column(db.Text)  # To store API response
+    response_data = db.Column(db.Text)  # To store API response JSON
+    response_timestamp = db.Column(db.DateTime, nullable=True)  # When API response was received
+    expiry_time = db.Column(db.BigInteger, nullable=True)  # Unix timestamp for expiry
+    expiry_date = db.Column(db.String(20), nullable=True)  # Formatted date YYYY-MMM-DD
+    uses_allowed = db.Column(db.Integer, default=1)
     vetting_form_id = db.Column(db.Integer, db.ForeignKey('vetting_form.id'), nullable=True)
 
 class VettingEvidence(db.Model):

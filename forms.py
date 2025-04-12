@@ -56,6 +56,10 @@ class MatrixRegistrationForm(FlaskForm):
         DataRequired(),
         Email()
     ])
+    assigned_username = StringField('Assigned Username of Invited Member', validators=[
+        DataRequired(),
+        Length(min=3, max=64)
+    ])
     submit = SubmitField('Generate Token and Submit')
 
 class VettingFormClass(FlaskForm):
