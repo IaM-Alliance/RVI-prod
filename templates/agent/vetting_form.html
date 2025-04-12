@@ -394,34 +394,51 @@
         clearButtons.forEach(button => {
             button.addEventListener('click', function(e) {
                 e.preventDefault();
+                
                 const targetId = this.getAttribute('data-target');
                 const fileInput = document.getElementById(targetId);
                 
-                // Simplest approach - create a clone and replace
-                const fileInputParent = fileInput.parentNode;
-                
-                // Create a new input with same attributes
-                const newInput = document.createElement('input');
-                newInput.type = 'file';
-                newInput.name = fileInput.name;
-                newInput.id = fileInput.id;
-                newInput.className = fileInput.className;
-                
-                // Clear the value (this is the magic part) by replacing with the new input
-                fileInputParent.replaceChild(newInput, fileInput);
-                
-                // Show visual feedback
-                const feedbackEl = document.createElement('div');
-                feedbackEl.className = 'alert alert-success mt-2 py-1';
-                feedbackEl.innerHTML = 'File cleared successfully';
-                fileInputParent.appendChild(feedbackEl);
-                
-                // Remove feedback after 2 seconds
-                setTimeout(() => {
-                    if (feedbackEl.parentNode) {
-                        feedbackEl.parentNode.removeChild(feedbackEl);
+                try {
+                    // This is the most reliable cross-browser way to clear a file input
+                    fileInput.value = '';
+                    
+                    // For IE/Edge (create a clean form element and reset)
+                    if (fileInput.value) {
+                        // Create a form, append the file input's clone, reset the form
+                        const form = document.createElement('form');
+                        const parentNode = fileInput.parentNode;
+                        form.appendChild(fileInput.cloneNode(true));
+                        form.reset();
+                        
+                        // Find the original position of input and replace it with cloned one
+                        const children = Array.from(parentNode.children);
+                        const position = children.indexOf(fileInput);
+                        
+                        if (position !== -1) {
+                            parentNode.replaceChild(form.firstChild, fileInput);
+                        }
                     }
-                }, 2000);
+                    
+                    // Show visual feedback
+                    const statusMessage = document.createElement('div');
+                    statusMessage.className = 'alert alert-success mt-2 py-1';
+                    statusMessage.textContent = 'File cleared successfully';
+                    
+                    // Find the parent group to add message
+                    const inputGroup = fileInput.closest('.input-group');
+                    inputGroup.insertAdjacentElement('afterend', statusMessage);
+                    
+                    // Remove the message after 2 seconds
+                    setTimeout(() => {
+                        if (statusMessage.parentNode) {
+                            statusMessage.parentNode.removeChild(statusMessage);
+                        }
+                    }, 2000);
+                    
+                } catch (error) {
+                    console.error('Error clearing file input:', error);
+                    alert('Could not clear the file. Please try again or reload the page.');
+                }
             });
         });
         
