@@ -527,6 +527,12 @@ def admin_review_vetting_form(form_id):
     # Get the agent who submitted the form
     submitter = User.query.get(vetting_form_record.user_id)
     
+    # Get evidence files for this form
+    evidence_files = VettingEvidence.query.filter_by(vetting_form_id=form_id).all()
+    
+    # Attach evidence files to form record for template access
+    vetting_form_record.evidence_files = evidence_files
+    
     if request.method == 'POST':
         action = request.form.get('action')
         
@@ -536,10 +542,14 @@ def admin_review_vetting_form(form_id):
             vetting_form_record.approved_at = datetime.utcnow()
             
             # Log the approval/rejection
+            log_details = f"Vetting form for {vetting_form_record.full_name} was {action}d"
+            if evidence_files:
+                log_details += f" with {len(evidence_files)} evidence file(s)"
+                
             log_entry = AuditLog(
                 user_id=current_user.id,
                 action=f"vetting_form_{action}d",
-                details=f"Vetting form for {vetting_form_record.full_name} was {action}d",
+                details=log_details,
                 ip_address=request.remote_addr
             )
             db.session.add(log_entry)

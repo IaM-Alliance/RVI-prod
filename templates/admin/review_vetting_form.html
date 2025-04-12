@@ -168,25 +168,9 @@
                 <div class="col-md-6">
                     <table class="table table-borderless">
                         <tr>
-                            <th style="width: 40%">Security Questions Answered:</th>
+                            <th style="width: 40%">Evidence Files:</th>
                             <td>
-                                {% if form.security_questions_answered %}
-                                    <span class="badge bg-success">YES</span>
-                                {% else %}
-                                    <span class="badge bg-danger">NO</span>
-                                {% endif %}
-                            </td>
-                        </tr>
-                        <tr>
-                            <th>Trust Level:</th>
-                            <td>
-                                {% if form.trust_level %}
-                                    <span class="badge {% if form.trust_level == 'high' %}bg-success{% elif form.trust_level == 'medium' %}bg-warning{% else %}bg-danger{% endif %}">
-                                        {{ form.trust_level|upper }}
-                                    </span>
-                                {% else %}
-                                    -
-                                {% endif %}
+                                <span class="badge bg-info">{{ form.evidence_files|length }} file(s)</span>
                             </td>
                         </tr>
                     </table>
@@ -203,6 +187,49 @@
             </div>
         </div>
     </div>
+    
+    {% if form.evidence_files %}
+    <div class="card mb-4">
+        <div class="card-header bg-primary text-white">
+            <h5 class="mb-0">Vetting Evidence</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table table-striped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Filename</th>
+                            <th>Type</th>
+                            <th>Size</th>
+                            <th>Upload Date</th>
+                            <th>Notes</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for evidence in form.evidence_files %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>{{ evidence.filename }}</td>
+                            <td>{{ evidence.file_type }}</td>
+                            <td>{{ (evidence.file_size / 1024)|round(1) }} KB</td>
+                            <td>{{ evidence.uploaded_at|datetime_format }}</td>
+                            <td>{{ evidence.notes|default('-', true) }}</td>
+                            <td>
+                                <a href="{{ url_for('serve_evidence_file', filename=evidence.file_path.split('/')[-1]) }}" 
+                                   class="btn btn-sm btn-primary" target="_blank">
+                                    View
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    {% endif %}
     
     {% if form.additional_info %}
     <div class="card mb-4">
