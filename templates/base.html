@@ -58,12 +58,18 @@
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('matrix_form') }}">Matrix Registration</a>
                             </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('token_list') }}">Token List</a>
+                            </li>
                         {% elif current_user.is_inviting_admin() %}
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('agent_dashboard') }}">Dashboard</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('matrix_form') }}">Matrix Registration</a>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{{ url_for('token_list') }}">Token List</a>
                             </li>
                             <li class="nav-item">
                                 <a class="nav-link" href="{{ url_for('vetting_form') }}">Vetting Form</a>

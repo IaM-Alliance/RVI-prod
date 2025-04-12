@@ -859,6 +859,48 @@ def generate_token_for_form(form_id):
     
     return render_template('admin/generate_token_for_form.html', form=form, vetting_form=vetting_form)
 
+@app.route('/admin/tokens')
+@login_required
+def token_list():
+    """List all tokens with details and check their usage status"""
+    # Only allow inviting_admin, server_admin and superadmin to access token list
+    if not current_user.is_inviting_admin():
+        flash('You do not have permission to access Token List.', 'danger')
+        return redirect(url_for('index'))
+        
+    if current_user.needs_password_change:
+        flash('Please change your temporary password before continuing.', 'warning')
+        return redirect(url_for('change_password'))
+    
+    # Get all tokens ordered by creation date (newest first)
+    tokens = MatrixToken.query.order_by(MatrixToken.created_at.desc()).all()
+    
+    # For each token, get the latest usage status from the Matrix API
+    from utils import get_matrix_token_info
+    
+    token_statuses = {}
+    for token_record in tokens:
+        try:
+            # Get token status from Matrix API
+            result = get_matrix_token_info(token_record.token)
+            if result['success']:
+                token_statuses[token_record.token] = result['response']
+            else:
+                token_statuses[token_record.token] = {
+                    'error': result.get('error', 'Unknown error'),
+                    'pending': None,
+                    'completed': None
+                }
+        except Exception as e:
+            logger.error(f"Error getting token status for {token_record.token}: {str(e)}")
+            token_statuses[token_record.token] = {
+                'error': f"Exception: {str(e)}",
+                'pending': None,
+                'completed': None
+            }
+    
+    return render_template('admin/token_list.html', tokens=tokens, token_statuses=token_statuses)
+
 @app.route('/agent/matrix-form', methods=['GET', 'POST'])
 @login_required
 @limiter.limit("20 per day; 5 per hour")
