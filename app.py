@@ -69,6 +69,33 @@ login_manager.login_message_category = 'danger'
 # Import models after db initialization
 from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence
 
+# Add secure headers to all responses
+@app.after_request
+def add_security_headers(response):
+    # Content Security Policy
+    response.headers['Content-Security-Policy'] = (
+        "default-src 'self'; "
+        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.replit.com; "
+        "img-src 'self' data:; "
+        "font-src 'self' https://cdn.jsdelivr.net;"
+    )
+    # Prevent MIME type sniffing
+    response.headers['X-Content-Type-Options'] = 'nosniff'
+    # XSS Protection
+    response.headers['X-XSS-Protection'] = '1; mode=block'
+    # Click-jacking protection
+    response.headers['X-Frame-Options'] = 'SAMEORIGIN'
+    # Strict Transport Security (only in production)
+    if not app.debug:
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+    # Referrer Policy
+    response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+    # Feature Policy
+    response.headers['Permissions-Policy'] = 'camera=(), microphone=(), geolocation=()'
+    
+    return response
+
 @login_manager.user_loader
 def load_user(user_id):
     return User.query.get(int(user_id))
@@ -367,6 +394,7 @@ def admin_dashboard():
 
 @app.route('/admin/register-user', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("10 per hour")
 def register_user():
     if not (current_user.is_superadmin() or current_user.is_server_admin()):
         abort(403)
@@ -716,6 +744,7 @@ def agent_dashboard():
 
 @app.route('/admin/generate-token-for-form/<int:form_id>', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per day; 5 per hour")
 def generate_token_for_form(form_id):
     # Only allow inviting_admin, server_admin and superadmin
     if not current_user.is_inviting_admin():
@@ -832,6 +861,7 @@ def generate_token_for_form(form_id):
 
 @app.route('/agent/matrix-form', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("20 per day; 5 per hour")
 def matrix_form():
     if current_user.needs_password_change:
         flash('Please change your temporary password before continuing.', 'warning')
