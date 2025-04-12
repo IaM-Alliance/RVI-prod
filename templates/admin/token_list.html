@@ -1,0 +1,252 @@
+{% extends 'base.html' %}
+
+{% block title %}Matrix Token List - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <h1 class="display-5 mb-4">
+            <i class="fas fa-key me-2"></i> Matrix Registration Tokens
+        </h1>
+        <p class="lead">This page displays all Matrix registration tokens and their current status.</p>
+    </div>
+</div>
+
+<div class="card mb-4">
+    <div class="card-header bg-dark">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-list-ul me-2"></i> Token List
+        </h5>
+    </div>
+    <div class="card-body">
+        {% if tokens %}
+            <div class="table-responsive">
+                <table id="token-table" class="table table-striped table-hover">
+                    <thead>
+                        <tr>
+                            <th>Token</th>
+                            <th>Full Name</th>
+                            <th>Email</th>
+                            <th>Assigned Username</th>
+                            <th>Created By</th>
+                            <th>Created At</th>
+                            <th>Expiry Date</th>
+                            <th>Status</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for token_record in tokens %}
+                            {% set token_status = token_statuses.get(token_record.token, {}) %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <code class="me-2">{{ token_record.token }}</code>
+                                        <button class="btn btn-sm btn-secondary" 
+                                                onclick="copyToClipboard('{{ token_record.token }}')" 
+                                                title="Copy token to clipboard">
+                                            <i class="fas fa-copy"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>{{ token_record.user_fullname }}</td>
+                                <td>
+                                    <a href="mailto:{{ token_record.user_email }}">{{ token_record.user_email }}</a>
+                                </td>
+                                <td>{{ token_record.assigned_username }}</td>
+                                <td>
+                                    {% if token_record.creator %}
+                                        {{ token_record.creator.username }}
+                                    {% else %}
+                                        Unknown
+                                    {% endif %}
+                                </td>
+                                <td>{{ token_record.created_at|datetime }}</td>
+                                <td>
+                                    {% if token_record.expiry_date %}
+                                        <span class="badge rounded-pill bg-warning text-dark">Expires: {{ token_record.expiry_date }}</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-secondary">No expiry set</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if token_status.error is defined and token_status.error %}
+                                        <span class="badge rounded-pill bg-danger">API Error</span>
+                                    {% elif token_status.completed is defined and token_status.completed > 0 %}
+                                        <span class="badge rounded-pill bg-success">Used</span>
+                                    {% elif token_status.pending is defined and token_status.pending > 0 %}
+                                        <span class="badge rounded-pill bg-warning text-dark">Pending</span>
+                                    {% elif token_status.expiry_time is defined and token_status.expiry_time < (now|int * 1000) %}
+                                        <span class="badge rounded-pill bg-danger">Expired</span>
+                                    {% else %}
+                                        <span class="badge rounded-pill bg-info">Available</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <button type="button" class="btn btn-sm btn-info" data-bs-toggle="modal" data-bs-target="#tokenModal{{ token_record.id }}">
+                                        <i class="fas fa-info-circle"></i> Details
+                                    </button>
+                                </td>
+                            </tr>
+                            
+                            <!-- Token Details Modal -->
+                            <div class="modal fade" id="tokenModal{{ token_record.id }}" tabindex="-1" aria-labelledby="tokenModalLabel{{ token_record.id }}" aria-hidden="true">
+                                <div class="modal-dialog modal-lg">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="tokenModalLabel{{ token_record.id }}">Token Details</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            <h6>Token Information</h6>
+                                            <div class="mb-3">
+                                                <div class="d-flex align-items-center mb-2">
+                                                    <strong class="me-2">Token:</strong>
+                                                    <code class="me-2">{{ token_record.token }}</code>
+                                                    <button class="btn btn-sm btn-secondary" 
+                                                            onclick="copyToClipboard('{{ token_record.token }}')" 
+                                                            title="Copy token to clipboard">
+                                                        <i class="fas fa-copy"></i>
+                                                    </button>
+                                                </div>
+                                                <div class="mb-1"><strong>User:</strong> {{ token_record.user_fullname }} ({{ token_record.user_email }})</div>
+                                                <div class="mb-1"><strong>Assigned Username:</strong> {{ token_record.assigned_username }}</div>
+                                                <div class="mb-1"><strong>Created:</strong> {{ token_record.created_at|datetime }}</div>
+                                                <div class="mb-1"><strong>Created By:</strong> {{ token_record.creator.username if token_record.creator else 'Unknown' }}</div>
+                                                <div class="mb-1"><strong>Expiry Date:</strong> {{ token_record.expiry_date if token_record.expiry_date else 'None' }}</div>
+                                                <div class="mb-1"><strong>Uses Allowed:</strong> {{ token_record.uses_allowed }}</div>
+                                            </div>
+
+                                            <h6>API Status</h6>
+                                            <div class="mb-3">
+                                                {% if token_status.error is defined and token_status.error %}
+                                                    <div class="alert alert-danger">
+                                                        <strong>API Error:</strong> {{ token_status.error }}
+                                                    </div>
+                                                {% else %}
+                                                    <div class="card bg-dark mb-3">
+                                                        <div class="card-header">
+                                                            <h6 class="mb-0">Token Status from Matrix API</h6>
+                                                        </div>
+                                                        <div class="card-body">
+                                                            <pre class="mb-0"><code>{{ token_status|tojson(indent=2) }}</code></pre>
+                                                        </div>
+                                                    </div>
+                                                {% endif %}
+                                            </div>
+
+                                            {% if token_record.response_data %}
+                                                <h6>Creation Response Data</h6>
+                                                <div class="card bg-dark mb-3">
+                                                    <div class="card-header">
+                                                        <h6 class="mb-0">Original API Response</h6>
+                                                    </div>
+                                                    <div class="card-body">
+                                                        <pre class="mb-0"><code>{{ token_record.response_data|tojson(indent=2) }}</code></pre>
+                                                    </div>
+                                                </div>
+                                            {% endif %}
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="alert alert-info mb-0">
+                <i class="fas fa-info-circle me-2"></i> No tokens have been generated yet.
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card bg-dark">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-info-circle me-2"></i> About Matrix Tokens
+                </h5>
+            </div>
+            <div class="card-body">
+                <p>Registration tokens are used to allow new members to register on the Matrix server. Each token:</p>
+                <ul>
+                    <li>Is single-use (can only be used once)</li>
+                    <li>Has an expiration date (typically 30 days from creation)</li>
+                    <li>Is linked to the approving admin for audit purposes</li>
+                    <li>Should be provided to the approved user via a separate, secure channel (Signal, Element, etc.)</li>
+                </ul>
+                
+                <div class="alert alert-warning">
+                    <strong>Important:</strong> When sending tokens to approved users, always remind them to use their assigned username. If they don't use the assigned username, their account may need to be deleted and replaced.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<!-- jQuery first, then DataTables -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Initialize DataTables - using $ syntax after ensuring jQuery is loaded
+        if (typeof jQuery !== 'undefined') {
+            try {
+                // Initialize the DataTable
+                $('#token-table').DataTable({
+                    order: [[5, 'desc']], // Sort by created date by default (newest first)
+                    pageLength: 10,
+                    language: {
+                        search: "Search tokens:",
+                        lengthMenu: "Show _MENU_ tokens per page",
+                        info: "Showing _START_ to _END_ of _TOTAL_ tokens",
+                        paginate: {
+                            first: "First",
+                            last: "Last",
+                            next: "Next",
+                            previous: "Previous"
+                        }
+                    }
+                });
+                console.log("DataTable initialized successfully");
+            } catch (error) {
+                console.error("Error initializing DataTable:", error);
+            }
+        } else {
+            console.error("jQuery is not available for DataTables initialization");
+        }
+    });
+
+    // Copy text to clipboard
+    function copyToClipboard(text) {
+        try {
+            // Create a temporary input element
+            const input = document.createElement('input');
+            input.setAttribute('value', text);
+            document.body.appendChild(input);
+            
+            // Select and copy the text
+            input.select();
+            document.execCommand('copy');
+            
+            // Remove the temporary element
+            document.body.removeChild(input);
+            
+            // Show a toast or alert to confirm copy
+            alert('Token copied to clipboard!');
+        } catch (error) {
+            console.error("Error copying to clipboard:", error);
+            alert("Could not copy token: " + text);
+        }
+    }
+</script>
+{% endblock %}
