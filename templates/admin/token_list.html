@@ -71,15 +71,40 @@
                                 </td>
                                 <td>
                                     {% if token_status.error is defined and token_status.error %}
-                                        <span class="badge rounded-pill bg-danger">API Error</span>
+                                        <span class="badge rounded-pill bg-danger token-status-badge animate-pulse" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="API Error: {{ token_status.error|truncate(100) }}">
+                                            <i class="fas fa-exclamation-triangle me-1"></i> API Error
+                                        </span>
                                     {% elif token_status.completed is defined and token_status.completed > 0 %}
-                                        <span class="badge rounded-pill bg-success">Used</span>
+                                        <span class="badge rounded-pill bg-success token-status-badge animate-success" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="Token has been used {{ token_status.completed }} time(s). No further use is allowed.">
+                                            <i class="fas fa-check-circle me-1"></i> Used
+                                        </span>
                                     {% elif token_status.pending is defined and token_status.pending > 0 %}
-                                        <span class="badge rounded-pill bg-warning text-dark">Pending</span>
+                                        <span class="badge rounded-pill bg-warning text-dark token-status-badge animate-pulse" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="Token is currently in use ({{ token_status.pending }} pending registration). Awaiting completion.">
+                                            <i class="fas fa-clock me-1"></i> Pending
+                                        </span>
                                     {% elif token_status.expiry_time is defined and token_status.expiry_time < (now|int * 1000) %}
-                                        <span class="badge rounded-pill bg-danger">Expired</span>
+                                        <span class="badge rounded-pill bg-danger token-status-badge animate-fade" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="Token has expired and can no longer be used. Expired on {{ (token_status.expiry_time / 1000)|int|timestamp_format }}">
+                                            <i class="fas fa-calendar-times me-1"></i> Expired
+                                        </span>
                                     {% else %}
-                                        <span class="badge rounded-pill bg-info">Available</span>
+                                        <span class="badge rounded-pill bg-info token-status-badge animate-pulse-slow" 
+                                              data-bs-toggle="tooltip" 
+                                              data-bs-placement="top" 
+                                              title="Token is available for use. Will expire on {{ (token_status.expiry_time / 1000)|int|timestamp_format if token_status.expiry_time else 'Never' }}">
+                                            <i class="fas fa-check me-1"></i> Available
+                                        </span>
                                     {% endif %}
                                 </td>
                                 <td>
