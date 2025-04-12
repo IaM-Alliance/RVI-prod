@@ -5,6 +5,9 @@ document.addEventListener('DOMContentLoaded', function() {
     initializePasswordToggle();
     initializeDataTables();
     initializeAlertDismiss();
+    
+    // Listen for theme changes
+    listenForThemeChanges();
 });
 
 function initializePasswordToggle() {
@@ -99,5 +102,63 @@ function fallbackCopyToClipboard(text) {
     } catch (err) {
         console.error('Fallback: Error copying text to clipboard', err);
         alert('Could not copy text: ' + text);
+    }
+}
+
+// Listen for theme changes
+function listenForThemeChanges() {
+    // Use MutationObserver to watch for theme attribute changes
+    const observer = new MutationObserver((mutations) => {
+        mutations.forEach((mutation) => {
+            if (mutation.attributeName === 'data-bs-theme') {
+                const theme = document.documentElement.getAttribute('data-bs-theme');
+                updateUIForTheme(theme);
+            }
+        });
+    });
+    
+    // Start observing the document with the configured parameters
+    observer.observe(document.documentElement, { attributes: true });
+    
+    // Also check for theme select elements on the page (for the preferences page)
+    const themeSelect = document.getElementById('theme');
+    if (themeSelect) {
+        themeSelect.addEventListener('change', function() {
+            updateUIForTheme(this.value);
+        });
+    }
+    
+    // Initialize UI based on current theme
+    const currentTheme = document.documentElement.getAttribute('data-bs-theme');
+    updateUIForTheme(currentTheme);
+}
+
+// Update UI elements based on selected theme
+function updateUIForTheme(theme) {
+    const navbar = document.querySelector('.navbar');
+    const footer = document.querySelector('footer');
+    
+    if (theme === 'light') {
+        // Switch to light theme
+        if (navbar) {
+            navbar.classList.remove('navbar-dark', 'bg-dark');
+            navbar.classList.add('navbar-light', 'bg-light');
+        }
+        
+        if (footer) {
+            footer.classList.remove('bg-dark');
+            footer.classList.add('bg-light');
+        }
+    } else {
+        // Switch to dark theme
+        if (navbar) {
+            navbar.classList.remove('navbar-light', 'bg-light');
+            navbar.classList.add('navbar-dark', 'bg-dark');
+        }
+        
+        if (footer) {
+            footer.classList.remove('bg-light');
+            footer.classList.add('bg-dark');
+        }
     }
 }
