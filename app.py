@@ -55,7 +55,7 @@ def load_user(user_id):
     return User.query.get(int(user_id))
 
 # Import forms
-from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingForm as VettingFormClass
+from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingFormClass
 
 from utils import generate_random_password, send_account_notification
 
@@ -532,7 +532,7 @@ def vetting_form():
         flash('Please change your temporary password before continuing.', 'warning')
         return redirect(url_for('change_password'))
     
-    form = VettingForm()  # Use the actual class name from forms.py
+    form = VettingFormClass()  # Use the form class from forms.py
     
     if form.validate_on_submit():
         # Create new vetting form record
@@ -596,7 +596,7 @@ def edit_vetting_form(form_id):
         flash('This vetting form has already been processed and cannot be edited.', 'warning')
         return redirect(url_for('agent_dashboard'))
     
-    form = VettingForm(obj=vetting_form_record)  # Use the same form class from forms.py
+    form = VettingFormClass(obj=vetting_form_record)  # Use the same form class from forms.py
     
     if form.validate_on_submit():
         # Update the form data
