@@ -1,13 +1,15 @@
 import os
 import logging
+import uuid
 from datetime import datetime
-from flask import Flask, render_template, redirect, url_for, flash, request, abort
+from flask import Flask, render_template, redirect, url_for, flash, request, abort, send_from_directory
 from markupsafe import Markup
 from flask_login import LoginManager, current_user, login_user, logout_user, login_required
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash, check_password_hash
+from werkzeug.utils import secure_filename
 import secrets
 import string
 
@@ -38,6 +40,11 @@ app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
+# Configure upload settings
+app.config["UPLOAD_FOLDER"] = "uploads/evidence"
+app.config["MAX_CONTENT_LENGTH"] = 16 * 1024 * 1024  # 16 megabytes max upload size
+app.config["ALLOWED_EXTENSIONS"] = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', 'doc', 'docx'}
+
 # Initialize the database
 db.init_app(app)
 
@@ -48,7 +55,7 @@ login_manager.login_view = 'login'
 login_manager.login_message_category = 'danger'
 
 # Import models after db initialization
-from models import User, AuditLog, MatrixToken, VettingForm
+from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -58,6 +65,48 @@ def load_user(user_id):
 from forms import LoginForm, ChangePasswordForm, UserRegistrationForm, MatrixRegistrationForm, VettingFormClass
 
 from utils import generate_random_password, send_account_notification
+
+# Helper functions for file uploads
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in app.config['ALLOWED_EXTENSIONS']
+
+def save_evidence_file(file, form_id, notes=None):
+    """Save an evidence file and return the VettingEvidence object"""
+    if not file or file.filename == '':
+        return None
+    
+    if not allowed_file(file.filename):
+        flash(f'File type not allowed for {file.filename}', 'danger')
+        return None
+    
+    # Create a unique filename
+    filename = secure_filename(file.filename)
+    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+    file_path = os.path.join(app.config['UPLOAD_FOLDER'], unique_filename)
+    
+    # Save the file
+    try:
+        file.save(file_path)
+        
+        # Create evidence record
+        evidence = VettingEvidence(
+            vetting_form_id=form_id,
+            filename=filename,
+            file_path=file_path,
+            file_type=file.content_type if hasattr(file, 'content_type') else None,
+            file_size=len(file.read()) if hasattr(file, 'read') else None,
+            notes=notes
+        )
+        
+        # Reset file position after reading for size
+        if hasattr(file, 'seek'):
+            file.seek(0)
+        
+        return evidence
+    except Exception as e:
+        logger.error(f"Error saving file: {str(e)}")
+        flash(f'Error saving file: {str(e)}', 'danger')
+        return None
 
 # Custom filters
 @app.template_filter('datetime_format')
@@ -184,6 +233,13 @@ def change_password():
             flash('Current password is incorrect.', 'danger')
     
     return render_template('change_password.html', form=form)
+
+# File serving route
+@app.route('/uploads/evidence/<filename>')
+@login_required
+def serve_evidence_file(filename):
+    """Serve an evidence file securely"""
+    return send_from_directory(app.config['UPLOAD_FOLDER'], filename)
 
 # Admin Routes
 @app.route('/admin/dashboard')
