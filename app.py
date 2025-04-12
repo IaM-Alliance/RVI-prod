@@ -548,6 +548,12 @@ def admin_vetting_forms():
     # Get submitted vetting forms that are pending review
     pending_forms = VettingForm.query.filter_by(status='submitted').order_by(VettingForm.updated_at.desc()).all()
     
+    # Get forms that are approved and awaiting token generation
+    # Only inviting_admin, server_admin, and superadmin can see this
+    awaiting_token_forms = []
+    if current_user.is_inviting_admin():
+        awaiting_token_forms = VettingForm.query.filter_by(status='awaiting_token').order_by(VettingForm.approved_at.desc()).all()
+    
     # Get recently approved/rejected forms
     processed_forms = VettingForm.query.filter(
         VettingForm.status.in_(['approved', 'rejected']),
@@ -556,6 +562,7 @@ def admin_vetting_forms():
     
     return render_template('admin/vetting_forms.html', 
                           pending_forms=pending_forms,
+                          awaiting_token_forms=awaiting_token_forms,
                           processed_forms=processed_forms)
 
 @app.route('/admin/vetting-form/<int:form_id>', methods=['GET', 'POST'])
@@ -584,12 +591,14 @@ def admin_review_vetting_form(form_id):
         action = request.form.get('action')
         
         if action in ['approve', 'reject']:
-            vetting_form_record.status = 'approved' if action == 'approve' else 'rejected'
+            # Set status to 'awaiting_token' if approved, otherwise 'rejected'
+            vetting_form_record.status = 'awaiting_token' if action == 'approve' else 'rejected'
             vetting_form_record.approved_by = current_user.id
             vetting_form_record.approved_at = datetime.utcnow()
             
             # Log the approval/rejection
-            log_details = f"Vetting form for {vetting_form_record.full_name} was {action}d"
+            status_text = 'approved (awaiting token)' if action == 'approve' else 'rejected'
+            log_details = f"Vetting form for {vetting_form_record.full_name} was {status_text}"
             if evidence_files:
                 log_details += f" with {len(evidence_files)} evidence file(s)"
                 
@@ -602,7 +611,11 @@ def admin_review_vetting_form(form_id):
             db.session.add(log_entry)
             db.session.commit()
             
-            flash(f'Vetting form has been {action}d successfully.', 'success')
+            if action == 'approve':
+                flash(f'Vetting form has been approved. The applicant is now in the queue awaiting token generation.', 'success')
+            else:
+                flash(f'Vetting form has been rejected.', 'success')
+                
             return redirect(url_for('admin_vetting_forms'))
     
     return render_template('admin/review_vetting_form.html', 
@@ -626,6 +639,122 @@ def agent_dashboard():
     return render_template('agent/dashboard.html', 
                           tokens=tokens,
                           vetting_forms=vetting_forms)
+
+@app.route('/admin/generate-token-for-form/<int:form_id>', methods=['GET', 'POST'])
+@login_required
+def generate_token_for_form(form_id):
+    # Only allow inviting_admin, server_admin and superadmin
+    if not current_user.is_inviting_admin():
+        flash('You do not have permission to generate tokens.', 'danger')
+        return redirect(url_for('index'))
+        
+    if current_user.needs_password_change:
+        flash('Please change your temporary password before continuing.', 'warning')
+        return redirect(url_for('change_password'))
+    
+    # Get the vetting form
+    vetting_form = VettingForm.query.get_or_404(form_id)
+    
+    # Verify the form is awaiting token
+    if vetting_form.status != 'awaiting_token':
+        flash('This form is not approved for token generation.', 'warning')
+        return redirect(url_for('admin_vetting_forms'))
+    
+    form = MatrixRegistrationForm()
+    
+    # Pre-fill the form with data from the vetting form
+    form.full_name.data = vetting_form.full_name
+    form.email.data = vetting_form.email
+    
+    if form.validate_on_submit():
+        # Request Matrix API to generate a token
+        from utils import matrix_api_post, send_token_notification
+        
+        # Call the API first to get a token
+        result = matrix_api_post(
+            user_fullname=form.full_name.data,
+            user_email=form.email.data,
+            assigned_username=form.assigned_username.data
+        )
+        
+        if result["success"]:
+            # Extract the token and other data from the API response
+            response_data = result["response"]
+            token = response_data.get("token", "")
+            
+            # Create token record with assigned username and API-provided data
+            new_token = MatrixToken(
+                token=token,
+                user_fullname=form.full_name.data,
+                user_email=form.email.data,
+                assigned_username=form.assigned_username.data,
+                created_by=current_user.id,
+                status="submitted",
+                response_data=json.dumps(response_data),
+                response_timestamp=datetime.fromisoformat(result["response_timestamp"].rstrip('Z')),
+                expiry_time=result["expiry_time"],
+                expiry_date=result["expiry_date"],
+                uses_allowed=1,
+                vetting_form_id=vetting_form.id  # Link the token to the vetting form
+            )
+            
+            # Update the vetting form status to approved
+            vetting_form.status = 'approved'
+            
+            db.session.add(new_token)
+            
+            # Log the token generation
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action="token_generated_from_form",
+                details=f"Generated Matrix token for approved form: {form.full_name.data} ({form.email.data}), assigned username: {form.assigned_username.data}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
+            db.session.commit()
+            
+            # Prepare vetting info for email notification
+            vetting_info = {
+                'verification_method': vetting_form.verification_method,
+                'verification_date': vetting_form.verification_date.strftime('%Y-%m-%d') if vetting_form.verification_date else None,
+                'verification_location': vetting_form.verification_location,
+                'vetting_score': vetting_form.vetting_score,
+                'vetting_notes': vetting_form.vetting_notes
+            }
+            
+            # Send email notification to admin
+            try:
+                send_token_notification(
+                    admin_email=current_user.email,
+                    admin_name=current_user.username,
+                    full_name=form.full_name.data,
+                    email=form.email.data,
+                    assigned_username=form.assigned_username.data,
+                    token=token,
+                    expiry_date=result["expiry_date"],
+                    vetting_info=vetting_info
+                )
+                flash(f'Token successfully generated and notification email sent.', 'success')
+            except Exception as e:
+                logger.error(f"Email notification error: {str(e)}")
+                flash(f'Token successfully generated, but email notification failed. Token: {token}, expires on: {result["expiry_date"]}', 'warning')
+            
+            return redirect(url_for('admin_vetting_forms'))
+        else:
+            # Log the failure
+            error_log = AuditLog(
+                user_id=current_user.id,
+                action="token_generation_failed",
+                details=f"Failed to generate token with Matrix API: {result['error']}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(error_log)
+            db.session.commit()
+            
+            flash('Failed to generate token with Matrix API. Please try again or contact an administrator.', 'danger')
+            return redirect(url_for('generate_token_for_form', form_id=form_id))
+    
+    return render_template('admin/generate_token_for_form.html', form=form, vetting_form=vetting_form)
 
 @app.route('/agent/matrix-form', methods=['GET', 'POST'])
 @login_required
