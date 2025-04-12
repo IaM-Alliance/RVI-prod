@@ -642,71 +642,62 @@ def matrix_form():
     form = MatrixRegistrationForm()
     
     if form.validate_on_submit():
-        # Generate a unique token
-        token = ''.join(secrets.choice(string.ascii_letters + string.digits) for _ in range(32))
-        
-        # Create token record with assigned username
-        new_token = MatrixToken(
-            token=token,
-            user_fullname=form.full_name.data,
-            user_email=form.email.data,
-            assigned_username=form.assigned_username.data,
-            created_by=current_user.id,
-            status="pending",
-            uses_allowed=1
-        )
-        
-        db.session.add(new_token)
-        
-        # Log the token generation
-        log_entry = AuditLog(
-            user_id=current_user.id,
-            action="token_generated",
-            details=f"Generated Matrix token for: {form.full_name.data} ({form.email.data}), assigned username: {form.assigned_username.data}",
-            ip_address=request.remote_addr
-        )
-        db.session.add(log_entry)
-        db.session.commit()
-        
-        # Now make the API call to register the token with Matrix
+        # Request Matrix API to generate a token
         from utils import matrix_api_post
         
+        # Call the API first to get a token
         result = matrix_api_post(
-            token=token,
             user_fullname=form.full_name.data,
             user_email=form.email.data,
             assigned_username=form.assigned_username.data
         )
         
         if result["success"]:
-            # Update the token with the response data
-            new_token.status = "submitted"
-            new_token.response_data = json.dumps(result["response"])
-            new_token.response_timestamp = datetime.fromisoformat(result["response_timestamp"].rstrip('Z'))
-            new_token.expiry_time = result["expiry_time"]
-            new_token.expiry_date = result["expiry_date"]
+            # Extract the token and other data from the API response
+            response_data = result["response"]
+            token = response_data.get("token", "")
             
+            # Create token record with assigned username and API-provided data
+            new_token = MatrixToken(
+                token=token,
+                user_fullname=form.full_name.data,
+                user_email=form.email.data,
+                assigned_username=form.assigned_username.data,
+                created_by=current_user.id,
+                status="submitted",
+                response_data=json.dumps(response_data),
+                response_timestamp=datetime.fromisoformat(result["response_timestamp"].rstrip('Z')),
+                expiry_time=result["expiry_time"],
+                expiry_date=result["expiry_date"],
+                uses_allowed=1
+            )
+            
+            db.session.add(new_token)
+            
+            # Log the token generation
+            log_entry = AuditLog(
+                user_id=current_user.id,
+                action="token_generated",
+                details=f"Generated Matrix token for: {form.full_name.data} ({form.email.data}), assigned username: {form.assigned_username.data}",
+                ip_address=request.remote_addr
+            )
+            db.session.add(log_entry)
             db.session.commit()
             
-            flash(f'Token successfully registered with Matrix. Token: {token}', 'success')
+            flash(f'Token successfully generated via Matrix API: {token}', 'success')
             flash(f'Token will expire on: {result["expiry_date"]}', 'info')
         else:
             # Log the failure
             error_log = AuditLog(
                 user_id=current_user.id,
-                action="token_registration_failed",
-                details=f"Failed to register token with Matrix API: {result['error']}",
+                action="token_generation_failed",
+                details=f"Failed to generate token with Matrix API: {result['error']}",
                 ip_address=request.remote_addr
             )
             db.session.add(error_log)
-            
-            # Update token status
-            new_token.status = "failed"
-            new_token.response_data = json.dumps({"error": result["error"]})
-            
             db.session.commit()
             
-            flash('Failed to register token with Matrix API. Please try again or contact an administrator.', 'danger')
+            flash('Failed to generate token with Matrix API. Please try again or contact an administrator.', 'danger')
         return redirect(url_for('agent_dashboard'))
     
     return render_template('agent/matrix_form.html', form=form)
