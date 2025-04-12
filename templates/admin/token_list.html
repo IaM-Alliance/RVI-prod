@@ -61,7 +61,7 @@
                                         Unknown
                                     {% endif %}
                                 </td>
-                                <td>{{ token_record.created_at|datetime }}</td>
+                                <td>{{ token_record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</td>
                                 <td>
                                     {% if token_record.expiry_date %}
                                         <span class="badge rounded-pill bg-warning text-dark">Expires: {{ token_record.expiry_date }}</span>
@@ -111,7 +111,7 @@
                                                 </div>
                                                 <div class="mb-1"><strong>User:</strong> {{ token_record.user_fullname }} ({{ token_record.user_email }})</div>
                                                 <div class="mb-1"><strong>Assigned Username:</strong> {{ token_record.assigned_username }}</div>
-                                                <div class="mb-1"><strong>Created:</strong> {{ token_record.created_at|datetime }}</div>
+                                                <div class="mb-1"><strong>Created:</strong> {{ token_record.created_at.strftime('%Y-%m-%d %H:%M:%S') }}</div>
                                                 <div class="mb-1"><strong>Created By:</strong> {{ token_record.creator.username if token_record.creator else 'Unknown' }}</div>
                                                 <div class="mb-1"><strong>Expiry Date:</strong> {{ token_record.expiry_date if token_record.expiry_date else 'None' }}</div>
                                                 <div class="mb-1"><strong>Uses Allowed:</strong> {{ token_record.uses_allowed }}</div>
@@ -192,37 +192,77 @@
 {% endblock %}
 
 {% block extra_js %}
-<!-- jQuery first, then DataTables -->
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
+<!-- Instead of relying on jQuery for DataTables, we'll use a simple, plain JavaScript solution -->
 <script>
+    // Sort the table by a specific column
+    function sortTable(table, column, ascending = true) {
+        const rows = Array.from(table.querySelectorAll('tbody tr'));
+        const direction = ascending ? 1 : -1;
+        
+        rows.sort((a, b) => {
+            const aValue = a.querySelectorAll('td')[column].textContent.trim();
+            const bValue = b.querySelectorAll('td')[column].textContent.trim();
+            return aValue.localeCompare(bValue) * direction;
+        });
+        
+        // Remove existing rows
+        rows.forEach(row => row.parentNode.removeChild(row));
+        
+        // Add sorted rows
+        const tbody = table.querySelector('tbody');
+        rows.forEach(row => tbody.appendChild(row));
+    }
+    
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize DataTables - using $ syntax after ensuring jQuery is loaded
-        if (typeof jQuery !== 'undefined') {
-            try {
-                // Initialize the DataTable
-                $('#token-table').DataTable({
-                    order: [[5, 'desc']], // Sort by created date by default (newest first)
-                    pageLength: 10,
-                    language: {
-                        search: "Search tokens:",
-                        lengthMenu: "Show _MENU_ tokens per page",
-                        info: "Showing _START_ to _END_ of _TOTAL_ tokens",
-                        paginate: {
-                            first: "First",
-                            last: "Last",
-                            next: "Next",
-                            previous: "Previous"
+        // Simple table search functionality
+        const searchInput = document.createElement('input');
+        searchInput.type = 'text';
+        searchInput.className = 'form-control mb-3';
+        searchInput.placeholder = 'Search tokens...';
+        
+        const table = document.getElementById('token-table');
+        if (table) {
+            // Add search field before the table
+            table.parentNode.insertBefore(searchInput, table);
+            
+            // Sort the table initially by creation date (column 5) in descending order
+            sortTable(table, 5, false);
+            
+            // Set up search functionality
+            searchInput.addEventListener('keyup', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = table.querySelectorAll('tbody tr');
+                
+                rows.forEach(row => {
+                    let found = false;
+                    Array.from(row.querySelectorAll('td')).forEach(cell => {
+                        if (cell.textContent.toLowerCase().includes(searchTerm)) {
+                            found = true;
                         }
-                    }
+                    });
+                    
+                    row.style.display = found ? '' : 'none';
                 });
-                console.log("DataTable initialized successfully");
-            } catch (error) {
-                console.error("Error initializing DataTable:", error);
-            }
-        } else {
-            console.error("jQuery is not available for DataTables initialization");
+            });
+            
+            // Add sorting functionality to table headers
+            const headers = table.querySelectorAll('thead th');
+            headers.forEach((header, index) => {
+                header.style.cursor = 'pointer';
+                header.addEventListener('click', function() {
+                    // Toggle sort direction
+                    const ascending = this.getAttribute('data-sort') !== 'asc';
+                    
+                    // Reset all headers
+                    headers.forEach(h => h.removeAttribute('data-sort'));
+                    
+                    // Set sort attribute on this header
+                    this.setAttribute('data-sort', ascending ? 'asc' : 'desc');
+                    
+                    // Sort the table
+                    sortTable(table, index, ascending);
+                });
+            });
         }
     });
 
