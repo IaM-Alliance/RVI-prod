@@ -35,7 +35,7 @@ def send_email(to_email, subject, body):
         
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = "support@iam-alliance.com"
+        msg['From'] = "support@app.iam-alliance.com"
         msg['To'] = to_email
         msg['Subject'] = subject
         
@@ -110,7 +110,7 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     
     Upon first login, you will be prompted to change your password.
     
-    If you need password assistance, please contact a server administrator via Signal, Element, or email support@iam-alliance.com.
+    If you need password assistance, please contact a server administrator via Signal, Element, or email support@app.iam-alliance.com.
     
     Regards,
     IaM-Alliance System
