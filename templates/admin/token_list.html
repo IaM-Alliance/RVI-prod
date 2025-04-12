@@ -239,6 +239,19 @@
     }
     
     document.addEventListener('DOMContentLoaded', function() {
+        // Initialize all tooltips
+        const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+        if (tooltipTriggerList.length > 0) {
+            tooltipTriggerList.map(function(tooltipTriggerEl) {
+                return new bootstrap.Tooltip(tooltipTriggerEl, {
+                    html: false,
+                    placement: 'top',
+                    boundary: 'window',
+                    template: '<div class="tooltip" role="tooltip"><div class="tooltip-arrow"></div><div class="tooltip-inner"></div></div>'
+                });
+            });
+        }
+        
         // Simple table search functionality
         const searchInput = document.createElement('input');
         searchInput.type = 'text';
@@ -289,6 +302,20 @@
                 });
             });
         }
+        
+        // Add hover effects for status badges
+        const statusBadges = document.querySelectorAll('.token-status-badge');
+        statusBadges.forEach(badge => {
+            badge.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-2px)';
+                this.style.boxShadow = '0 4px 8px rgba(0, 0, 0, 0.2)';
+            });
+            
+            badge.addEventListener('mouseleave', function() {
+                this.style.transform = '';
+                this.style.boxShadow = '';
+            });
+        });
     });
 
     // Copy text to clipboard

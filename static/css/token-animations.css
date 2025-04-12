@@ -1,0 +1,95 @@
+/* Token Status Animations */
+
+/* Base styles for all token status badges */
+.token-status-badge {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+}
+
+.token-status-badge:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Pulsing animation for pending tokens */
+.animate-pulse {
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.7;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Slow pulse for available tokens */
+.animate-pulse-slow {
+    animation: pulseSlow 4s infinite;
+}
+
+@keyframes pulseSlow {
+    0% {
+        opacity: 1;
+    }
+    50% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Success animation for used tokens */
+.animate-success {
+    animation: successPulse 2s;
+}
+
+@keyframes successPulse {
+    0% {
+        transform: scale(1);
+    }
+    50% {
+        transform: scale(1.1);
+    }
+    100% {
+        transform: scale(1);
+    }
+}
+
+/* Fade animation for expired tokens */
+.animate-fade {
+    animation: fadeEffect 3s infinite alternate;
+}
+
+@keyframes fadeEffect {
+    0% {
+        opacity: 0.8;
+    }
+    100% {
+        opacity: 1;
+    }
+}
+
+/* Tooltip enhancements */
+[data-bs-toggle="tooltip"] {
+    cursor: help;
+}
+
+/* Use with Bootstrap's tooltip initialization in JavaScript */
+.tooltip-inner {
+    max-width: 300px;
+    text-align: left;
+    padding: 8px 12px;
+    font-size: 0.85rem;
+    border-radius: 4px;
+    background-color: rgba(33, 37, 41, 0.95);
+}
