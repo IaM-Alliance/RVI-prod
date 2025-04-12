@@ -534,6 +534,61 @@ def approve_user(user_id):
     # Pass User query to template for looking up the creator
     return render_template('admin/approve_user.html', user=user, user_query=User.query)
 
+@app.route('/admin/delete-user/<int:user_id>', methods=['POST'])
+@login_required
+def delete_user(user_id):
+    # Only allow superadmin to delete users
+    if not current_user.is_superadmin():
+        abort(403)
+    
+    # Prevent deletion of own account
+    if current_user.id == user_id:
+        flash('You cannot delete your own account.', 'danger')
+        return redirect(url_for('user_list'))
+    
+    # Get the user to delete
+    user = User.query.get_or_404(user_id)
+    
+    try:
+        # Get the username for the log
+        username = user.username
+        
+        # Delete all associated audit logs
+        AuditLog.query.filter_by(user_id=user_id).delete()
+        
+        # Delete all associated tokens
+        MatrixToken.query.filter_by(created_by=user_id).delete()
+        
+        # Delete all associated vetting forms
+        vetting_forms = VettingForm.query.filter_by(user_id=user_id).all()
+        for form in vetting_forms:
+            # Delete associated evidence files
+            VettingEvidence.query.filter_by(vetting_form_id=form.id).delete()
+            
+        # Now delete the vetting forms
+        VettingForm.query.filter_by(user_id=user_id).delete()
+        
+        # Finally delete the user
+        db.session.delete(user)
+        
+        # Log the user deletion
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action="user_deleted",
+            details=f"Deleted user: {username} with role: {user.role}",
+            ip_address=request.remote_addr
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        flash(f'User {username} has been permanently deleted.', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error(f"Error deleting user: {str(e)}", exc_info=True)
+        flash(f'Error deleting user: {str(e)}', 'danger')
+    
+    return redirect(url_for('user_list'))
+
 @app.route('/admin/audit-log/<int:user_id>')
 @login_required
 def audit_log(user_id):
@@ -770,7 +825,7 @@ def matrix_form():
         return redirect(url_for('change_password'))
         
     # Only allow inviting_admin, server_admin and superadmin to access matrix registration
-    if current_user.is_vetting_agent():
+    if not current_user.is_inviting_admin():
         flash('You do not have permission to access Matrix registration.', 'danger')
         return redirect(url_for('agent_dashboard'))
     
