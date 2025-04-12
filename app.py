@@ -11,6 +11,8 @@ from sqlalchemy.orm import DeclarativeBase
 from werkzeug.middleware.proxy_fix import ProxyFix
 from werkzeug.security import generate_password_hash, check_password_hash
 from werkzeug.utils import secure_filename
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 import secrets
 import string
 
@@ -27,6 +29,15 @@ db = SQLAlchemy(model_class=Base)
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(16))
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
+
+# Initialize rate limiter
+limiter = Limiter(
+    get_remote_address,
+    app=app,
+    default_limits=["200 per day", "50 per hour"],
+    storage_uri="memory://",
+    strategy="fixed-window"
+)
 
 # Configure the database
 db_url = os.environ.get("DATABASE_URL")
@@ -157,6 +168,7 @@ def index():
         return redirect(url_for('agent_dashboard'))
 
 @app.route('/login', methods=['GET', 'POST'])
+@limiter.limit("5 per minute; 20 per hour")
 def login():
     if current_user.is_authenticated:
         return redirect(url_for('index'))
@@ -210,6 +222,7 @@ def logout():
 
 @app.route('/change-password', methods=['GET', 'POST'])
 @login_required
+@limiter.limit("3 per minute; 10 per hour")
 def change_password():
     form = ChangePasswordForm()
     
