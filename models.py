@@ -1,6 +1,7 @@
 from datetime import datetime
 from app import db
 from flask_login import UserMixin
+import json
 
 class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -50,6 +51,79 @@ class User(UserMixin, db.Model):
             return 'inviting_admin'
         else:
             return 'vetting_agent'
+    
+    # Add a relationship to user preferences
+    preferences = db.relationship('UserPreferences', backref='user', uselist=False, lazy=True, cascade='all, delete-orphan')
+
+
+class UserPreferences(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    theme = db.Column(db.String(20), default='dark')  # dark, light
+    token_colors = db.Column(db.Text, default=json.dumps({
+        'available': 'bg-info',
+        'used': 'bg-success',
+        'pending': 'bg-warning',
+        'expired': 'bg-danger',
+        'error': 'bg-danger'
+    }))
+    role_colors = db.Column(db.Text, default=json.dumps({
+        'superadmin': 'bg-danger',
+        'server_admin': 'bg-warning',
+        'inviting_admin': 'bg-primary',
+        'vetting_agent': 'bg-info'
+    }))
+    status_colors = db.Column(db.Text, default=json.dumps({
+        'active': 'bg-success',
+        'pending': 'bg-warning',
+        'awaiting_token': 'bg-info',
+        'rejected': 'bg-danger',
+        'draft': 'bg-secondary',
+        'submitted': 'bg-primary'
+    }))
+    animation_enabled = db.Column(db.Boolean, default=True)
+    tooltip_enabled = db.Column(db.Boolean, default=True)
+    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<UserPreferences for user_id: {self.user_id}>'
+    
+    def get_token_colors(self):
+        try:
+            return json.loads(self.token_colors)
+        except:
+            return {
+                'available': 'bg-info',
+                'used': 'bg-success',
+                'pending': 'bg-warning',
+                'expired': 'bg-danger',
+                'error': 'bg-danger'
+            }
+    
+    def get_role_colors(self):
+        try:
+            return json.loads(self.role_colors)
+        except:
+            return {
+                'superadmin': 'bg-danger',
+                'server_admin': 'bg-warning',
+                'inviting_admin': 'bg-primary',
+                'vetting_agent': 'bg-info'
+            }
+    
+    def get_status_colors(self):
+        try:
+            return json.loads(self.status_colors)
+        except:
+            return {
+                'active': 'bg-success',
+                'pending': 'bg-warning',
+                'awaiting_token': 'bg-info',
+                'rejected': 'bg-danger',
+                'draft': 'bg-secondary',
+                'submitted': 'bg-primary'
+            }
+
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
