@@ -38,16 +38,17 @@ function initializeDataTables() {
 }
 
 function initializeAlertDismiss() {
-    // Auto-dismiss alerts after 5 seconds
-    const alerts = document.querySelectorAll('.alert:not(.alert-persistent)');
+    // Alerts are now persistent by default, only adding event listeners for manual dismissal
+    const closeButtons = document.querySelectorAll('.alert .btn-close');
     
-    alerts.forEach(alert => {
-        setTimeout(() => {
+    closeButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const alert = this.closest('.alert');
             alert.classList.add('fade');
             setTimeout(() => {
                 alert.remove();
             }, 500);
-        }, 5000);
+        });
     });
 }
 
