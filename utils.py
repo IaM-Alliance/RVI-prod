@@ -94,14 +94,14 @@ import time
 import json
 from datetime import datetime, timedelta
 
-def matrix_api_post(token, user_fullname, user_email, assigned_username):
+def matrix_api_post(user_fullname, user_email, assigned_username):
     """
-    Register a new token with the Matrix API.
+    Request the Matrix API to generate a new registration token.
+    Instead of creating our own token, we ask the Matrix server to create one.
     """
     try:
-        # Based on the documentation, the correct endpoint to create a new token
-        # Would be a PUT request to this endpoint with the specific token in the URL
-        api_url = f"https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/{token}"
+        # Endpoint to create a new token (without specifying token value)
+        api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/new"
         bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
         
         if not bearer_token:
@@ -122,8 +122,8 @@ def matrix_api_post(token, user_fullname, user_email, assigned_username):
             "expiry_time": expiry_time_ms
         }
         
-        # Make the API request - using PUT to the specific token endpoint
-        response = requests.put(
+        # Make the API request - using POST to create a new token
+        response = requests.post(
             api_url,
             json=request_data,
             headers={
