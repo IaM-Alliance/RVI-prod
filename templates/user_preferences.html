@@ -36,6 +36,12 @@
         margin-bottom: 5px;
         text-align: center;
         font-weight: bold;
+        color: #000 !important; /* Ensure text is black for better readability */
+    }
+    
+    /* Exception for dark backgrounds */
+    .color-sample.bg-dark, .color-sample.bg-secondary {
+        color: #fff !important;
     }
 </style>
 {% endblock %}

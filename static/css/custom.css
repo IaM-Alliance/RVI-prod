@@ -134,6 +134,24 @@
     white-space: nowrap;
 }
 
+/* Status and role badges - set text color to black for better readability on colored backgrounds */
+.bg-success, .bg-info, .bg-primary, .bg-danger, .bg-warning, 
+.badge.bg-success, .badge.bg-info, .badge.bg-primary, .badge.bg-danger, .badge.bg-warning,
+.btn.bg-success, .btn.bg-info, .btn.bg-primary, .btn.bg-danger, .btn.bg-warning,
+span.bg-success, span.bg-info, span.bg-primary, span.bg-danger, span.bg-warning,
+.table .bg-success, .table .bg-info, .table .bg-primary, .table .bg-danger, .table .bg-warning {
+    color: #000 !important;
+}
+
+/* Exception for very dark backgrounds */
+.bg-dark, .bg-secondary,
+.badge.bg-dark, .badge.bg-secondary,
+.btn.bg-dark, .btn.bg-secondary,
+span.bg-dark, span.bg-secondary,
+.table .bg-dark, .table .bg-secondary {
+    color: #fff !important;
+}
+
 /* Responsive adjustments */
 @media (max-width: 768px) {
     .stats-box .count {
