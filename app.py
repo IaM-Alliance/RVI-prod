@@ -67,7 +67,7 @@ login_manager.login_view = 'login'
 login_manager.login_message_category = 'danger'
 
 # Import models after db initialization
-from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence
+from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, UserPreferences
 
 # Add secure headers to all responses
 @app.after_request
@@ -287,6 +287,102 @@ def change_password():
             flash('Current password is incorrect.', 'danger')
     
     return render_template('change_password.html', form=form)
+
+@app.route('/user-preferences', methods=['GET', 'POST'])
+@login_required
+def user_preferences():
+    # Check if user has preferences, create if they don't
+    if not current_user.preferences:
+        new_preferences = UserPreferences(user_id=current_user.id)
+        db.session.add(new_preferences)
+        db.session.commit()
+        db.session.refresh(current_user)
+    
+    form = UserPreferencesForm()
+    
+    # On GET, populate form with current preferences
+    if request.method == 'GET':
+        form.theme.data = current_user.preferences.theme
+        form.animation_enabled.data = current_user.preferences.animation_enabled
+        form.tooltip_enabled.data = current_user.preferences.tooltip_enabled
+        
+        # Populate token colors
+        token_colors = current_user.preferences.get_token_colors()
+        form.token_available_color.data = token_colors.get('available', 'bg-info')
+        form.token_used_color.data = token_colors.get('used', 'bg-success')
+        form.token_pending_color.data = token_colors.get('pending', 'bg-warning')
+        form.token_expired_color.data = token_colors.get('expired', 'bg-danger')
+        form.token_error_color.data = token_colors.get('error', 'bg-danger')
+        
+        # Populate role colors
+        role_colors = current_user.preferences.get_role_colors()
+        form.superadmin_color.data = role_colors.get('superadmin', 'bg-danger')
+        form.server_admin_color.data = role_colors.get('server_admin', 'bg-warning')
+        form.inviting_admin_color.data = role_colors.get('inviting_admin', 'bg-primary')
+        form.vetting_agent_color.data = role_colors.get('vetting_agent', 'bg-info')
+        
+        # Populate status colors
+        status_colors = current_user.preferences.get_status_colors()
+        form.active_status_color.data = status_colors.get('active', 'bg-success')
+        form.pending_status_color.data = status_colors.get('pending', 'bg-warning')
+        form.awaiting_token_status_color.data = status_colors.get('awaiting_token', 'bg-info')
+        form.rejected_status_color.data = status_colors.get('rejected', 'bg-danger')
+        form.draft_status_color.data = status_colors.get('draft', 'bg-secondary')
+        form.submitted_status_color.data = status_colors.get('submitted', 'bg-primary')
+    
+    # On POST, save the preferences
+    if form.validate_on_submit():
+        # Update theme and option preferences
+        current_user.preferences.theme = form.theme.data
+        current_user.preferences.animation_enabled = form.animation_enabled.data
+        current_user.preferences.tooltip_enabled = form.tooltip_enabled.data
+        
+        # Update token colors
+        token_colors = {
+            'available': form.token_available_color.data,
+            'used': form.token_used_color.data,
+            'pending': form.token_pending_color.data,
+            'expired': form.token_expired_color.data,
+            'error': form.token_error_color.data
+        }
+        current_user.preferences.token_colors = json.dumps(token_colors)
+        
+        # Update role colors
+        role_colors = {
+            'superadmin': form.superadmin_color.data,
+            'server_admin': form.server_admin_color.data,
+            'inviting_admin': form.inviting_admin_color.data,
+            'vetting_agent': form.vetting_agent_color.data
+        }
+        current_user.preferences.role_colors = json.dumps(role_colors)
+        
+        # Update status colors
+        status_colors = {
+            'active': form.active_status_color.data,
+            'pending': form.pending_status_color.data,
+            'awaiting_token': form.awaiting_token_status_color.data,
+            'rejected': form.rejected_status_color.data,
+            'draft': form.draft_status_color.data,
+            'submitted': form.submitted_status_color.data
+        }
+        current_user.preferences.status_colors = json.dumps(status_colors)
+        
+        # Update last modified timestamp (handled by onupdate)
+        
+        # Log the preference change
+        log_entry = AuditLog(
+            user_id=current_user.id,
+            action="preferences_updated",
+            details="User updated their preferences",
+            ip_address=request.remote_addr
+        )
+        db.session.add(log_entry)
+        db.session.commit()
+        
+        flash('Your preferences have been updated.', 'success')
+        return redirect(url_for('user_preferences'))
+    
+    return render_template('user_preferences.html', form=form)
 
 # File routes
 @app.route('/uploads/evidence/<filename>')
