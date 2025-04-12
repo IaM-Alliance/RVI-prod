@@ -99,7 +99,8 @@ def matrix_api_post(token, user_fullname, user_email, assigned_username):
     Register a new token with the Matrix API.
     """
     try:
-        api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/new"
+        # Base URL from the example
+        api_url = "https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens"
         bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
         
         if not bearer_token:
@@ -121,12 +122,13 @@ def matrix_api_post(token, user_fullname, user_email, assigned_username):
             "expiry_time": expiry_time_ms
         }
         
-        # Make the API request
-        response = requests.put(
+        # Make the API request - using POST to the correct endpoint
+        response = requests.post(
             api_url,
             json=request_data,
             headers={
                 "Authorization": f"Bearer {bearer_token}",
+                "Accept": "application/json",
                 "Content-Type": "application/json"
             },
             timeout=10
@@ -176,6 +178,7 @@ def get_matrix_token_info(token):
     Get information about a specific Matrix token.
     """
     try:
+        # Matching the same API endpoint structure
         api_url = f"https://matrix.iam-alliance.com/_synapse/admin/v1/registration_tokens/{token}"
         bearer_token = os.environ.get('MATRIX_API_BEARER_TOKEN')
         
@@ -187,12 +190,12 @@ def get_matrix_token_info(token):
                 "response": None
             }
         
-        # Make the API request
+        # Make the API request with the same headers as in the working example
         response = requests.get(
             api_url,
             headers={
                 "Authorization": f"Bearer {bearer_token}",
-                "Content-Type": "application/json"
+                "Accept": "application/json"
             },
             timeout=10
         )
