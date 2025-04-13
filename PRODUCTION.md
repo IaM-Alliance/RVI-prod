@@ -2,6 +2,37 @@
 
 This document outlines the security enhancements and configuration changes that have been made to prepare the application for a production environment, as well as additional steps that should be taken during deployment.
 
+## Summary of Security Improvements
+
+The following improvements have been made to make the application production-ready:
+
+1. **Email Configuration**
+   - Configured to use Mailjet's SMTP server (in-v3.mailjet.com) with TLS on port 587
+   - Improved error handling for email sending failures
+   - Added comprehensive logging for email operations
+
+2. **Content Security Policy (CSP)**
+   - Implemented stricter CSP settings for production
+   - Removed unsafe-inline for better script security
+   - Added robust CSP violation reporting endpoint with support for multiple content types
+   - Made CSP reporting domain-aware (only activated in production)
+
+3. **Rate Limiting**
+   - Enhanced rate limiting configuration with more sophisticated strategy
+   - Added support for distributed rate limiting in production
+   - Configured with tiered limits (per minute, hour, and day)
+   - Improved fallbacks for rate limiter failures
+
+4. **File Upload Security**
+   - Created automatic directory creation with secure permissions (750)
+   - Added thorough file type validation
+   - Implemented secure file naming with UUID generation
+
+5. **Logging**
+   - Improved logging format with structured data
+   - Configured production-appropriate log levels
+   - Added detailed error logging throughout the application
+
 ## Security Enhancements Implemented
 
 1. **Logging Configuration**
