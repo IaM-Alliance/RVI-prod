@@ -237,7 +237,24 @@ def inject_pending_forms():
 def csp_report():
     """Endpoint to receive CSP violation reports"""
     try:
-        report_data = request.get_json().get('csp-report', {})
+        # Accept both JSON and form data submissions
+        content_type = request.headers.get('Content-Type', '')
+        if 'application/json' in content_type:
+            data = request.get_json(silent=True)
+            if data:
+                report_data = data.get('csp-report', {})
+            else:
+                report_data = {'error': 'Empty JSON data'}
+        elif 'application/csp-report' in content_type:
+            # Some browsers use this content type
+            try:
+                report_data = json.loads(request.data.decode('utf-8')).get('csp-report', {})
+            except:
+                report_data = {'error': 'Invalid CSP report format'}
+        else:
+            # Fall back to raw data for any other content type
+            report_data = {'raw': request.data.decode('utf-8', errors='replace')}
+        
         # Log CSP violations
         logger.warning(f"CSP Violation: {json.dumps(report_data)}")
         return jsonify({'status': 'received'}), 204

@@ -100,7 +100,6 @@ def main():
         args.db_host,
         args.db_port,
         args.matrix_token,
-        args.smtp_server,
         args.mailjet_key,
         args.mailjet_secret
     )
