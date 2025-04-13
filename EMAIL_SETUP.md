@@ -1,45 +1,43 @@
 # Email Configuration Guide
 
-This application uses Mailjet's SMTP server for all outbound email communications. This document provides instructions on how to set up and test the email functionality.
+This application uses SMTP2GO's SMTP relay server for all outbound email communications. This document provides instructions on how to set up and test the email functionality.
 
-## Mailjet SMTP Configuration
+## SMTP2GO Configuration
 
-The application is configured to use the following Mailjet SMTP settings:
+The application is configured to use the following SMTP2GO settings:
 
-- **SMTP Server**: in-v3.mailjet.com
-- **Port**: 587
+- **SMTP Server**: mail.smtp2go.com
+- **Primary Port**: 2525
+- **Fallback Ports**: 8025, 587, 80
 - **Security**: TLS
 - **Authentication**: Required
+- **Sender Email**: support@rvi.iam-alliance.com
 
 ## Required Environment Variables
 
-To enable email functionality, you must set the following environment variables:
+To enable email functionality, you must set the following environment variable:
 
 ```
-MAILJET_API_KEY=your_mailjet_api_key
-MAILJET_SECRET_KEY=your_mailjet_secret_key
+SMTP_RELAY_AUTHPW=your_smtp_password
 ```
 
-These can be added to your `.env` file or set in your deployment environment.
+This can be added to your `.env` file or set in your deployment environment.
 
-## Getting Mailjet Credentials
+## SMTP2GO Authentication
 
-1. Sign up for a Mailjet account at [https://www.mailjet.com/](https://www.mailjet.com/)
-2. Navigate to Account Settings → API Key Management
-3. Create a new API key pair or use the existing one
-4. The API Key is used as the SMTP username, and the Secret Key is used as the SMTP password
+1. The sender email address (support@rvi.iam-alliance.com) is used as the username for SMTP authentication
+2. The password is stored in the SMTP_RELAY_AUTHPW environment variable
 
 ## Testing Email Functionality
 
-A test script has been provided to verify that your Mailjet configuration is working correctly. Run:
+A test script has been provided to verify that your SMTP2GO configuration is working correctly. Run:
 
 ```bash
-# Set environment variables first
-export MAILJET_API_KEY=your_key
-export MAILJET_SECRET_KEY=your_secret
+# Set environment variable first
+export SMTP_RELAY_AUTHPW=your_password
 
 # Then run the test script with a recipient email
-python test_mailjet_smtp.py recipient@example.com
+python test_smtp.py recipient@example.com
 ```
 
 This will send a test email to the specified recipient.
@@ -48,11 +46,12 @@ This will send a test email to the specified recipient.
 
 If emails are not being sent:
 
-1. **Check Credentials**: Ensure your Mailjet API Key and Secret Key are correct
-2. **Network Issues**: Make sure your server can reach Mailjet's SMTP server (in-v3.mailjet.com) on port 587
-3. **Logs**: Check the application logs for error messages related to email sending
-4. **Rate Limits**: Be aware of Mailjet's sending rate limits for your account tier
-5. **Sender Domain**: Ensure your sender domain (support@app.iam-alliance.com) is properly configured in Mailjet
+1. **Check Credentials**: Ensure your SMTP password is correct and the SMTP_RELAY_AUTHPW environment variable is set
+2. **Network Issues**: Make sure your server can reach the SMTP2GO server (mail.smtp2go.com) on at least one of the configured ports
+3. **Logs**: Check the application logs for error messages related to email sending (look for port-specific errors)
+4. **Rate Limits**: Be aware of SMTP2GO's sending rate limits for your account tier
+5. **Sender Domain**: Ensure your sender domain (rvi.iam-alliance.com) is properly configured in SMTP2GO's dashboard
+6. **Firewall Rules**: Ensure your firewall allows outbound connections on the required ports (2525, 8025, 587, 80)
 
 ## Email Templates
 
@@ -67,7 +66,9 @@ To modify these templates, edit the corresponding functions in `utils.py`.
 
 For production use, consider:
 
-1. **Domain Verification**: Verify your sender domain with Mailjet to improve deliverability
-2. **SPF and DKIM**: Configure SPF and DKIM records for your sending domain
-3. **Monitoring**: Set up monitoring for email delivery rates and bounces
-4. **Fallback Service**: Consider implementing a fallback email service for critical emails
+1. **Domain Verification**: Verify your sender domain (rvi.iam-alliance.com) with SMTP2GO to improve deliverability
+2. **SPF and DKIM**: Configure SPF and DKIM records for your sending domain in your DNS settings
+3. **Monitoring**: Set up monitoring for email delivery rates and bounces through SMTP2GO's dashboard
+4. **SMTP Ports**: Ensure your firewall and network configuration allow outbound connections on the primary port (2525) or at least one of the fallback ports
+5. **Email Templates**: Consider moving email templates to separate files for easier maintenance
+6. **Error Handling**: Configure notifications for failed email deliveries to ensure critical communications aren't missed
