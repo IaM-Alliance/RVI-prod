@@ -42,7 +42,7 @@ The system is configured to use:
 - SMTP server: mail.smtp2go.com
 - Primary port: 2525 (with fallbacks: 8025, 587, 80)
 - TLS: Enabled
-- Sender: support@rvi.iam-alliance.com
+- Sender: IaMA RVI Support <support@rvi.iam-alliance.com>
 
 If you're receiving this email, the configuration is working correctly.
 
