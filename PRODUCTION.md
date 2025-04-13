@@ -48,8 +48,7 @@ This document outlines the security enhancements and configuration changes that 
      # Optional Matrix API integration
      MATRIX_ADMIN_TOKEN=<your_matrix_token>
      
-     # Optional Email configuration
-     SMTP_RELAY_SERVER=<your_smtp_server>
+     # Email configuration (Mailjet SMTP)
      MAILJET_API_KEY=<your_mailjet_key>
      MAILJET_SECRET_KEY=<your_mailjet_secret>
      ```
