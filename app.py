@@ -98,13 +98,13 @@ from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, Us
 # Add secure headers to all responses
 @app.after_request
 def add_security_headers(response):
-    # Content Security Policy - Allow needed CDNs
+    # Content Security Policy - Local resources only, no CDNs
     csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.replit.com https://cdnjs.cloudflare.com; "
+        "script-src 'self' 'unsafe-inline'; "
+        "style-src 'self' 'unsafe-inline'; "
         "img-src 'self' data:; "
-        "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "font-src 'self' data:; "
         "connect-src 'self'; "
         "frame-ancestors 'self'; "  # Prevent embedding in iframes outside your domain
         "base-uri 'self'; "  # Restrict base tag
