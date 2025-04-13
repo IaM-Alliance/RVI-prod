@@ -5,15 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}IaM-Alliance Vetting System{% endblock %}</title>
     
-    <!-- Bootstrap CSS (Replit theme) -->
+    <!-- Bootstrap CSS (Local) -->
     {% if current_user.is_authenticated and current_user.preferences and current_user.preferences.theme == 'light' %}
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='libs/bootstrap/dist/bootstrap.min.css') }}">
     {% else %}
-    <link rel="stylesheet" href="https://cdn.replit.com/agent/bootstrap-agent-dark-theme.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='libs/replit/bootstrap-agent-dark-theme.min.css') }}">
     {% endif %}
     
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Font Awesome (Local) -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='libs/fontawesome/css/all.min.css') }}">
     
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
@@ -146,11 +146,11 @@
         </div>
     </footer>
     
-    <!-- Bootstrap Bundle with Popper -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Bootstrap Bundle with Popper (local) -->
+    <script src="{{ url_for('static', filename='libs/bootstrap/dist/bootstrap.bundle.min.js') }}"></script>
     
-    <!-- jQuery (needed for some components) -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <!-- jQuery (local) -->
+    <script src="{{ url_for('static', filename='libs/jquery/jquery-3.6.0.min.js') }}"></script>
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
