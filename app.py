@@ -17,7 +17,13 @@ import secrets
 import string
 
 # Setup logging
-logging.basicConfig(level=logging.DEBUG)
+# Use INFO level for production (less verbose than DEBUG)
+logging_level = logging.INFO if not os.environ.get("FLASK_DEBUG") else logging.DEBUG
+logging.basicConfig(
+    level=logging_level,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
 logger = logging.getLogger(__name__)
 
 class Base(DeclarativeBase):
@@ -28,15 +34,23 @@ db = SQLAlchemy(model_class=Base)
 # Create the app
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", secrets.token_hex(16))
+
+# Explicitly set debug mode to False for production
+# Can be overridden with FLASK_DEBUG environment variable
+app.config['DEBUG'] = False
+
 app.wsgi_app = ProxyFix(app.wsgi_app, x_proto=1, x_host=1)  # needed for url_for to generate with https
 
-# Initialize rate limiter
+# Initialize rate limiter with more robust settings for production
 limiter = Limiter(
     get_remote_address,
     app=app,
-    default_limits=["200 per day", "50 per hour"],
-    storage_uri="memory://",
-    strategy="fixed-window"
+    default_limits=["1000 per day", "300 per hour", "30 per minute"],
+    storage_uri="memory://",  # In production, consider using redis or memcached
+    strategy="moving-window",  # More accurate than fixed-window
+    headers_enabled=True,  # Send rate limit headers
+    swallow_errors=True,  # Don't fail if rate limiter fails
+    default_limits_per_method=True  # Apply rate limits per HTTP method
 )
 
 # Configure the database
@@ -47,8 +61,11 @@ if db_url and db_url.startswith("postgres://"):
 
 app.config["SQLALCHEMY_DATABASE_URI"] = db_url
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
-    "pool_recycle": 300,
-    "pool_pre_ping": True,
+    "pool_recycle": 300,  # Recycle connections after 5 minutes of inactivity
+    "pool_pre_ping": True,  # Verify connections before use to avoid stale connections
+    "pool_size": 10,  # Increase connection pool size for production
+    "max_overflow": 20,  # Allow up to 20 additional connections in high-load situations
+    "pool_timeout": 30  # Connection timeout in seconds
 }
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
@@ -59,6 +76,15 @@ app.config["ALLOWED_EXTENSIONS"] = {'txt', 'pdf', 'png', 'jpg', 'jpeg', 'gif', '
 
 # Initialize the database
 db.init_app(app)
+
+# Ensure upload directory exists and has proper permissions
+upload_dir = app.config["UPLOAD_FOLDER"]
+if not os.path.exists(upload_dir):
+    try:
+        os.makedirs(upload_dir, mode=0o750, exist_ok=True)
+        logger.info(f"Created upload directory: {upload_dir}")
+    except Exception as e:
+        logger.error(f"Failed to create upload directory: {str(e)}")
 
 # Initialize login manager
 login_manager = LoginManager()
@@ -72,14 +98,28 @@ from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, Us
 # Add secure headers to all responses
 @app.after_request
 def add_security_headers(response):
-    # Content Security Policy
-    response.headers['Content-Security-Policy'] = (
+    # Content Security Policy - Stricter for production
+    csp_policy = (
         "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdn.replit.com; "
+        "script-src 'self' https://cdn.jsdelivr.net; "  # Removed unsafe-inline for better security
+        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "  # Kept unsafe-inline for CSS
         "img-src 'self' data:; "
-        "font-src 'self' https://cdn.jsdelivr.net;"
+        "font-src 'self' https://cdn.jsdelivr.net; "
+        "connect-src 'self'; "
+        "frame-ancestors 'self'; "  # Prevent embedding in iframes outside your domain
+        "base-uri 'self'; "  # Restrict base tag
+        "form-action 'self'; "  # Restrict form submissions
+        "object-src 'none'; "  # Block plugins
+        "upgrade-insecure-requests; "  # Force HTTPS
     )
+    
+    # Get domain name from request for production use
+    domain = request.host.split(':')[0] if request.host else None
+    if domain and domain != 'localhost' and domain != '127.0.0.1':
+        # Add report-uri for production
+        csp_policy += f"report-uri /csp-report;"
+    
+    response.headers['Content-Security-Policy'] = csp_policy
     # Prevent MIME type sniffing
     response.headers['X-Content-Type-Options'] = 'nosniff'
     # XSS Protection
@@ -193,6 +233,18 @@ def inject_pending_forms():
     return {'pending_forms': 0}
 
 # Create routes
+@app.route('/csp-report', methods=['POST'])
+def csp_report():
+    """Endpoint to receive CSP violation reports"""
+    try:
+        report_data = request.get_json().get('csp-report', {})
+        # Log CSP violations
+        logger.warning(f"CSP Violation: {json.dumps(report_data)}")
+        return jsonify({'status': 'received'}), 204
+    except Exception as e:
+        logger.error(f"Error processing CSP report: {str(e)}")
+        return jsonify({'status': 'error'}), 500
+
 @app.route('/')
 def index():
     if not current_user.is_authenticated:
