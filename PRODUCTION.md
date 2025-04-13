@@ -7,7 +7,8 @@ This document outlines the security enhancements and configuration changes that 
 The following improvements have been made to make the application production-ready:
 
 1. **Email Configuration**
-   - Configured to use Mailjet's SMTP server (in-v3.mailjet.com) with TLS on port 587
+   - Configured to use SMTP2GO relay server (mail.smtp2go.com) with multiple fallback ports (2525, 8025, 587, 80) and TLS
+   - Set sender email to support@rvi.iam-alliance.com with display name "IaMA RVI Support"
    - Improved error handling for email sending failures
    - Added comprehensive logging for email operations
 
@@ -50,10 +51,10 @@ The following improvements have been made to make the application production-rea
    - Improved error handling for database connections
 
 4. **Content Security Policy**
-   - Implemented stricter CSP settings for production
+   - Implemented environment-aware CSP settings: permissive in development, stricter in production
    - Added reporting endpoint for CSP violations
-   - Removed unsafe-inline for better script security
-   - Added domain-aware CSP configuration
+   - Created balanced policy that maintains security while ensuring compatibility with required CDNs
+   - Added domain-aware CSP configuration and violation monitoring
 
 5. **Rate Limiting**
    - Improved rate limiting configuration for production traffic
@@ -218,8 +219,8 @@ Create a cron job for database backups:
 ## Security Contacts
 
 For security-related issues, please contact:
-- Security Team: security@example.com
-- Application Owner: admin@example.com
+- Security Team: support@rvi.iam-alliance.com
+- Application Owner: admin@hq.iam-alliance.com
 
 ## Maintenance Windows
 

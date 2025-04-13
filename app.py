@@ -98,20 +98,37 @@ from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, Us
 # Add secure headers to all responses
 @app.after_request
 def add_security_headers(response):
-    # Content Security Policy - Allow everything for now
-    csp_policy = (
-        "default-src * 'unsafe-inline' 'unsafe-eval'; "
-        "script-src * 'unsafe-inline' 'unsafe-eval'; "
-        "style-src * 'unsafe-inline'; "
-        "img-src * data: blob:; "
-        "font-src * data:; "
-        "connect-src *; "
-        "frame-ancestors 'self'; "  # Still prevent embedding in iframes outside your domain
-        "base-uri 'self'; "  # Restrict base tag
-        "form-action 'self'; "  # Restrict form submissions
-        "object-src 'none'; "  # Block plugins
-        "upgrade-insecure-requests; "  # Force HTTPS
-    )
+    # Content Security Policy - Balanced approach
+    if app.debug:
+        # Development mode - permissive policy
+        csp_policy = (
+            "default-src * 'unsafe-inline' 'unsafe-eval'; "
+            "script-src * 'unsafe-inline' 'unsafe-eval'; "
+            "style-src * 'unsafe-inline'; "
+            "img-src * data: blob:; "
+            "font-src * data:; "
+            "connect-src *; "
+            "frame-ancestors 'self'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "object-src 'none'; "
+            "upgrade-insecure-requests; "
+        )
+    else:
+        # Production mode - stricter policy
+        csp_policy = (
+            "default-src 'self'; "
+            "script-src 'self' https://cdn.jsdelivr.net https://code.jquery.com 'unsafe-inline'; "
+            "style-src 'self' https://cdn.jsdelivr.net https://cdn.replit.com https://cdnjs.cloudflare.com 'unsafe-inline'; "
+            "img-src 'self' data:; "
+            "font-src 'self' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com data:; "
+            "connect-src 'self'; "
+            "frame-ancestors 'self'; "
+            "base-uri 'self'; "
+            "form-action 'self'; "
+            "object-src 'none'; "
+            "upgrade-insecure-requests; "
+        )
     
     # Get domain name from request for production use
     domain = request.host.split(':')[0] if request.host else None
