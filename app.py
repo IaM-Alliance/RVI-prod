@@ -15,7 +15,10 @@ from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 import secrets
 import string
+from dotenv import load_dotenv
 
+
+load_dotenv()
 # Setup logging
 # Use INFO level for production (less verbose than DEBUG)
 logging_level = logging.INFO if not os.environ.get("FLASK_DEBUG") else logging.DEBUG
