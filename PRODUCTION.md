@@ -79,9 +79,8 @@ The following improvements have been made to make the application production-rea
      # Optional Matrix API integration
      MATRIX_ADMIN_TOKEN=<your_matrix_token>
      
-     # Email configuration (Mailjet SMTP)
-     MAILJET_API_KEY=<your_mailjet_key>
-     MAILJET_SECRET_KEY=<your_mailjet_secret>
+     # Email configuration (SMTP2GO relay)
+     SMTP_RELAY_AUTHPW=<your_smtp_password>
      ```
    - Set permissions on the `.env` file to be restricted: `chmod 600 .env`
 

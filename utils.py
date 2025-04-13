@@ -25,45 +25,61 @@ def generate_random_password(length=12):
     return ''.join(password)
 
 def send_email(to_email, subject, body):
-    """Send an email using Mailjet's SMTP relay server."""
+    """Send an email using SMTP2GO relay server."""
     try:
-        # Mailjet SMTP configuration
-        smtp_host = "in-v3.mailjet.com"  # Using Mailjet SMTP server directly
-        smtp_port = 587  # TLS port for Mailjet
-        mailjet_api_key = os.environ.get("MAILJET_API_KEY")
-        mailjet_secret_key = os.environ.get("MAILJET_SECRET_KEY")
+        # SMTP2GO configuration
+        smtp_host = "mail.smtp2go.com"  # Primary SMTP server
+        primary_port = 2525  # Preferred TLS port
+        fallback_ports = [8025, 587, 80]  # Fallback TLS ports
+        sender_email = "support@rvi.iam-alliance.com"  # Also used as username
+        smtp_password = os.environ.get("SMTP_RELAY_AUTHPW")
         
-        if not mailjet_api_key or not mailjet_secret_key:
-            logger.error("Mailjet credentials not configured. Email cannot be sent.")
+        if not smtp_password:
+            logger.error("SMTP relay password not configured. Email cannot be sent.")
             return False
         
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = "support@app.iam-alliance.com"
+        msg['From'] = sender_email
         msg['To'] = to_email
         msg['Subject'] = subject
         
         # Attach body
         msg.attach(MIMEText(body, 'plain'))
         
-        # Connect to Mailjet SMTP using TLS
-        logger.info(f"Connecting to Mailjet SMTP server {smtp_host} on port {smtp_port}")
-        with smtplib.SMTP(smtp_host, smtp_port) as server:
-            server.ehlo()
-            server.starttls()
-            server.ehlo()
-            
-            # Authenticate with Mailjet
-            logger.info("Authenticating with Mailjet")
-            server.login(mailjet_api_key, mailjet_secret_key)
-            
-            # Send the email
-            server.send_message(msg)
-            logger.info(f"Email sent successfully to {to_email}")
+        # Try primary port first, then fallbacks if needed
+        ports_to_try = [primary_port] + fallback_ports
         
-        return True
+        for port in ports_to_try:
+            try:
+                logger.info(f"Connecting to SMTP server {smtp_host} on port {port}")
+                with smtplib.SMTP(smtp_host, port) as server:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                    
+                    # Authenticate with SMTP2GO
+                    logger.info("Authenticating with SMTP2GO")
+                    server.login(sender_email, smtp_password)
+                    
+                    # Send the email
+                    server.send_message(msg)
+                    logger.info(f"Email sent successfully to {to_email} via port {port}")
+                
+                # If we reach here, email was sent successfully
+                return True
+                
+            except Exception as port_error:
+                logger.warning(f"Failed to send email via port {port}: {str(port_error)}")
+                # Continue to next port if this one failed
+                continue
+        
+        # If we get here, all ports failed
+        logger.error("All SMTP ports failed. Email could not be sent.")
+        return False
+        
     except Exception as e:
-        logger.error(f"Failed to send email via Mailjet: {str(e)}")
+        logger.error(f"Failed to send email: {str(e)}")
         return False
 
 def send_account_notification(admin_email, user_email, username, admin_name):
@@ -99,7 +115,7 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     
     Upon first login, you will be prompted to change your password.
     
-    If you need password assistance, please contact a server administrator via Signal, Element, or email support@app.iam-alliance.com.
+    If you need password assistance, please contact a server administrator via Signal, Element, or email support@rvi.iam-alliance.com.
     
     Regards,
     IaM-Alliance System
