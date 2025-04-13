@@ -40,7 +40,7 @@ def send_email(to_email, subject, body):
         
         # Create message
         msg = MIMEMultipart()
-        msg['From'] = sender_email
+        msg['From'] = f"IaMA RVI Support <{sender_email}>"
         msg['To'] = to_email
         msg['Subject'] = subject
         

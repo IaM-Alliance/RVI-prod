@@ -12,6 +12,7 @@ The application is configured to use the following SMTP2GO settings:
 - **Security**: TLS
 - **Authentication**: Required
 - **Sender Email**: support@rvi.iam-alliance.com
+- **Display Name**: IaMA RVI Support
 
 ## Required Environment Variables
 
