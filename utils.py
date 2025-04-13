@@ -25,13 +25,17 @@ def generate_random_password(length=12):
     return ''.join(password)
 
 def send_email(to_email, subject, body):
-    """Send an email using the configured SMTP relay server."""
+    """Send an email using Mailjet's SMTP relay server."""
     try:
-        # Get SMTP relay configuration from environment variables
-        smtp_host = os.environ.get("SMTP_RELAY_SERVER", "localhost")
-        smtp_port = 587  # Default TLS port
+        # Mailjet SMTP configuration
+        smtp_host = "in-v3.mailjet.com"  # Using Mailjet SMTP server directly
+        smtp_port = 587  # TLS port for Mailjet
         mailjet_api_key = os.environ.get("MAILJET_API_KEY")
         mailjet_secret_key = os.environ.get("MAILJET_SECRET_KEY")
+        
+        if not mailjet_api_key or not mailjet_secret_key:
+            logger.error("Mailjet credentials not configured. Email cannot be sent.")
+            return False
         
         # Create message
         msg = MIMEMultipart()
@@ -42,39 +46,24 @@ def send_email(to_email, subject, body):
         # Attach body
         msg.attach(MIMEText(body, 'plain'))
         
-        # Try connecting with TLS first
-        try:
-            logger.info(f"Connecting to SMTP server {smtp_host} on port {smtp_port} using TLS")
-            with smtplib.SMTP(smtp_host, smtp_port) as server:
-                server.ehlo()
-                server.starttls()
-                server.ehlo()
-                
-                # If mailjet credentials are provided, use them for authentication
-                if mailjet_api_key and mailjet_secret_key:
-                    logger.info(f"Authenticating with Mailjet API credentials")
-                    server.login(mailjet_api_key, mailjet_secret_key)
-                
-                # Send the email
-                server.send_message(msg)
-                logger.info(f"Email sent successfully to {to_email}")
-        except Exception as tls_error:
-            # If TLS connection fails, try SSL as fallback
-            logger.warning(f"TLS connection failed: {str(tls_error)}. Attempting SSL fallback.")
+        # Connect to Mailjet SMTP using TLS
+        logger.info(f"Connecting to Mailjet SMTP server {smtp_host} on port {smtp_port}")
+        with smtplib.SMTP(smtp_host, smtp_port) as server:
+            server.ehlo()
+            server.starttls()
+            server.ehlo()
             
-            # Fallback to SSL on port 465
-            with smtplib.SMTP_SSL(smtp_host, 465) as server:
-                # If mailjet credentials are provided, use them for authentication
-                if mailjet_api_key and mailjet_secret_key:
-                    server.login(mailjet_api_key, mailjet_secret_key)
-                
-                # Send the email
-                server.send_message(msg)
-                logger.info(f"Email sent successfully to {to_email} using SSL fallback")
+            # Authenticate with Mailjet
+            logger.info("Authenticating with Mailjet")
+            server.login(mailjet_api_key, mailjet_secret_key)
+            
+            # Send the email
+            server.send_message(msg)
+            logger.info(f"Email sent successfully to {to_email}")
         
         return True
     except Exception as e:
-        logger.error(f"Failed to send email: {str(e)}")
+        logger.error(f"Failed to send email via Mailjet: {str(e)}")
         return False
 
 def send_account_notification(admin_email, user_email, username, admin_name):

@@ -14,8 +14,7 @@ def generate_secret_key():
     return secrets.token_hex(32)
 
 def create_env_file(env_file_path, db_user, db_pass, db_name, db_host='localhost', 
-                    db_port='5432', matrix_token=None, smtp_server=None, 
-                    mailjet_key=None, mailjet_secret=None):
+                    db_port='5432', matrix_token=None, mailjet_key=None, mailjet_secret=None):
     """Create a .env file with the necessary environment variables"""
     
     # Create the directory if it doesn't exist
@@ -43,11 +42,8 @@ def create_env_file(env_file_path, db_user, db_pass, db_name, db_host='localhost
         ])
     
     # Add email configuration if provided
-    if smtp_server or mailjet_key or mailjet_secret:
-        env_vars.append("# Email Configuration")
-        
-        if smtp_server:
-            env_vars.append(f"SMTP_RELAY_SERVER={smtp_server}")
+    if mailjet_key or mailjet_secret:
+        env_vars.append("# Email Configuration (Mailjet SMTP)")
         
         if mailjet_key:
             env_vars.append(f"MAILJET_API_KEY={mailjet_key}")
@@ -85,12 +81,10 @@ def main():
     # Optional configuration
     parser.add_argument('--matrix-token',
                         help='Matrix admin token for API access')
-    parser.add_argument('--smtp-server',
-                        help='SMTP relay server for sending emails')
     parser.add_argument('--mailjet-key',
-                        help='Mailjet API key')
+                        help='Mailjet API key for email sending')
     parser.add_argument('--mailjet-secret',
-                        help='Mailjet API secret')
+                        help='Mailjet API secret for email sending')
     
     args = parser.parse_args()
     
