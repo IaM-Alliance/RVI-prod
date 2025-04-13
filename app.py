@@ -98,15 +98,15 @@ from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, Us
 # Add secure headers to all responses
 @app.after_request
 def add_security_headers(response):
-    # Content Security Policy - Local resources only, no CDNs
+    # Content Security Policy - Allow everything for now
     csp_policy = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline'; "
-        "style-src 'self' 'unsafe-inline'; "
-        "img-src 'self' data:; "
-        "font-src 'self' data:; "
-        "connect-src 'self'; "
-        "frame-ancestors 'self'; "  # Prevent embedding in iframes outside your domain
+        "default-src * 'unsafe-inline' 'unsafe-eval'; "
+        "script-src * 'unsafe-inline' 'unsafe-eval'; "
+        "style-src * 'unsafe-inline'; "
+        "img-src * data: blob:; "
+        "font-src * data:; "
+        "connect-src *; "
+        "frame-ancestors 'self'; "  # Still prevent embedding in iframes outside your domain
         "base-uri 'self'; "  # Restrict base tag
         "form-action 'self'; "  # Restrict form submissions
         "object-src 'none'; "  # Block plugins
