@@ -85,7 +85,7 @@ def send_email(to_email, subject, body):
 def send_account_notification(admin_email, user_email, username, admin_name):
     """Send notification emails to both admin and new user."""
     # Send to admin
-    admin_subject = f"New User Account Created: {username}"
+    admin_subject = f"New RVI User Account Created: {username}"
     admin_body = f"""
     Hello {admin_name},
     
@@ -103,11 +103,12 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     send_email(admin_email, admin_subject, admin_body)
     
     # Send to user
-    user_subject = "Welcome to IaM-Alliance Vetting System"
+    user_subject = "Welcome to IaM-Alliance Registration Vetting and Invitation System"
     user_body = f"""
     Hello {username},
     
-    An account has been created for you on the IaM-Alliance Vetting System.
+    An account has been created for you on the IaM-Alliance Vetting System.  The URL for the site is:
+    https://rvi.iam-alliance.com 
     
     Your username is: {username}
     
@@ -118,7 +119,7 @@ def send_account_notification(admin_email, user_email, username, admin_name):
     If you need password assistance, please contact a server administrator via Signal, Element, or email support@rvi.iam-alliance.com.
     
     Regards,
-    IaM-Alliance System
+    IaM-Alliance Registration Vetting and Invitation System
     """
     
     send_email(user_email, user_subject, user_body)
