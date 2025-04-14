@@ -1,8 +1,12 @@
-FROM python:3.11-slim
+ARG VERSION=latest
+FROM python:latest
 
 # Set working directory
-WORKDIR /app
+WORKDIR /app/
 
+RUN python -m venv /opt/RVI-prod/venv
+# Enable venv
+ENV PATH="/opt/RVI-prod/venv/bin:$PATH"
 # Set environment variables
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
