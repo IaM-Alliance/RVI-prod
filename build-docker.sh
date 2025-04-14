@@ -1,7 +1,7 @@
 #!/bin/bash
 # Script to build the Docker image for the IaM-Alliance Vetting System
 
-set -e  # Exit immediately if a command exits with a non-zero status
+#set -e  # Exit immediately if a command exits with a non-zero status
 
 
 # Define variables

@@ -2,9 +2,10 @@ version: '3.8'
 
 services:
   db:
+    container_name: rvidb
     image: postgres:15-alpine
     volumes:
-      - postgres_data:/var/lib/postgresql/data/
+      - ./postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
@@ -19,8 +20,9 @@ services:
       - app-network
 
   web:
+    container_name: rviapp
     build: .
-    command: gunicorn --bind 0.0.0.0:5000 --workers 3 main:app
+    command: "gunicorn --bind 0.0.0.0:5000 --workers 3 main:app"
     volumes:
       - .:/app
       - ./uploads:/app/uploads

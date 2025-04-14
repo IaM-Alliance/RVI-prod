@@ -1,5 +1,5 @@
 ARG VERSION=latest
-FROM python:latest
+FROM python:3.13.3-slim-bookworm
 
 # Set working directory
 WORKDIR /app/
