@@ -7,7 +7,7 @@ services:
       - postgres_data:/var/lib/postgresql/data/
     environment:
       - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-}
       - POSTGRES_DB=iam_alliance
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
@@ -27,12 +27,13 @@ services:
     ports:
       - "5000:5000"
     environment:
-      - DATABASE_URL=postgresql://postgres:postgres@db:5432/iam_alliance
+      - DATABASE_URL=${DATABASE_URL:-}
       - SESSION_SECRET=${SESSION_SECRET:-default_secret_key_for_development}
       - MATRIX_ADMIN_TOKEN=${MATRIX_ADMIN_TOKEN:-}
       - SMTP_RELAY_SERVER=${SMTP_RELAY_SERVER:-}
-      - MAILJET_API_KEY=${MAILJET_API_KEY:-}
-      - MAILJET_SECRET_KEY=${MAILJET_SECRET_KEY:-}
+      - SMTP_RELAY_AUTHPW=${SMTP_RELAY_AUTHPW:-}
+#      - MAILJET_API_KEY=${MAILJET_API_KEY:-}
+#      - MAILJET_SECRET_KEY=${MAILJET_SECRET_KEY:-}
     depends_on:
       db:
         condition: service_healthy
