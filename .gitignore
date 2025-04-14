@@ -53,3 +53,10 @@ docker-compose.override.yml
 *.swp
 *.swo
 .DS_Store
+.import/vetting_form
+.import/audit_log
+.import/matrix_token
+.import/user_preferences
+.gitignore
+.import/user
+.import/vetting_evidence
