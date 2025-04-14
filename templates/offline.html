@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+
+{% block title %}Offline - IaM-Alliance Vetting System{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="fas fa-wifi-slash me-2"></i> You are offline</h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-4">
+                    <i class="fas fa-signal-slash fa-5x text-danger mb-3"></i>
+                    <h5>No internet connection available</h5>
+                    <p class="text-muted">Please check your connection and try again.</p>
+                </div>
+                
+                <div class="alert alert-info">
+                    <p class="mb-0">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        Some features may still be available while offline if you've previously accessed them.
+                    </p>
+                </div>
+                
+                <div class="d-grid gap-2">
+                    <button id="retry-connection" class="btn btn-lg btn-primary">
+                        <i class="fas fa-sync me-2"></i> Retry Connection
+                    </button>
+                    <a href="/" class="btn btn-outline-secondary">
+                        <i class="fas fa-home me-2"></i> Try Homepage
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.getElementById('retry-connection').addEventListener('click', function() {
+        window.location.reload();
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+/* PWA-specific styles */
+.add-to-home {
+    display: none; /* Hidden by default, shown via JavaScript */
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.2);
+    z-index: 1050; /* Above most content */
+    transition: all 0.3s ease;
+}
+
+/* iOS-specific adjustments for notches and rounded corners */
+@supports (padding: max(0px)) {
+    .add-to-home {
+        padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+    }
+}
+
+/* Button animation when shown */
+.add-to-home.visible {
+    animation: slideUp 0.5s forwards;
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+/* For offline mode */
+.fa-wifi-slash {
+    position: relative;
+}
+.fa-wifi-slash:before {
+    content: "\f1eb"; /* fa-wifi */
+}
+.fa-wifi-slash:after {
+    content: "\f00d"; /* fa-times */
+    position: absolute;
+    font-size: 0.6em;
+    top: 0.5em;
+    right: -0.3em;
+    color: red;
+}
+
+.fa-signal-slash {
+    position: relative;
+}
+.fa-signal-slash:before {
+    content: "\f012"; /* fa-signal */
+}
+.fa-signal-slash:after {
+    content: "\f00d"; /* fa-times */
+    position: absolute;
+    font-size: 0.5em;
+    top: 0.5em;
+    right: -0.3em;
+    color: red;
+}

@@ -3,7 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#121212">
+    <meta name="description" content="Role-based user management system for IaM-Alliance vetting agents">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
     <title>{% block title %}IaM-Alliance Vetting System{% endblock %}</title>
+    
+    <!-- Web App Manifest -->
+    <link rel="manifest" href="{{ url_for('static', filename='manifest.json') }}">
+    
+    <!-- PWA Icons -->
+    <link rel="icon" type="image/png" sizes="192x192" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
+    <link rel="apple-touch-icon" href="{{ url_for('static', filename='icons/icon-192x192.png') }}">
     
     <!-- Bootstrap CSS (Local) -->
     {% if current_user.is_authenticated and current_user.preferences and current_user.preferences.theme == 'light' %}
@@ -18,6 +29,7 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="{{ url_for('static', filename='css/custom.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/token-animations.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/pwa-styles.css') }}">
     
     {% block extra_css %}{% endblock %}
 </head>
@@ -154,6 +166,23 @@
     
     <!-- Custom JavaScript -->
     <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    
+    <!-- PWA Service Worker Registration -->
+    <script src="{{ url_for('static', filename='js/pwa-register.js') }}"></script>
+    
+    <!-- Add to Home Screen Button (Hidden by default, shown when install prompt is available) -->
+    <div class="add-to-home fixed-bottom bg-dark text-white text-center py-2" style="display: none;">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-9 text-start">
+                    <p class="mb-0">Install this app on your device for offline access</p>
+                </div>
+                <div class="col-3 text-end">
+                    <button class="btn btn-primary btn-sm">Install App</button>
+                </div>
+            </div>
+        </div>
+    </div>
     
     {% block extra_js %}{% endblock %}
 </body>
