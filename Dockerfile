@@ -21,6 +21,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY pyproject.toml .
 COPY uv.lock .
 
+# Create and activate virtual environment
+RUN python -m venv /opt/RVI-prod/venv
+# Enable venv
+ENV PATH="/opt/RVI-prod/venv/bin:$PATH"
+
 # Install Python dependencies
 RUN pip install --upgrade pip && \
     pip install uv && \
