@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background circle -->
+  <circle cx="256" cy="256" r="256" fill="#1A1A2E"/>
+  
+  <!-- Shield outline -->
+  <path d="M256 96C256 96 168 128 112 128V256C112 328 164 392 256 416C348 392 400 328 400 256V128C344 128 256 96 256 96Z" 
+        stroke="#4361EE" stroke-width="16" fill="#16213E"/>
+  
+  <!-- Inner shield details -->
+  <path d="M256 368C317 352 352 304 352 256V160C312 160 256 136 256 136V368Z" fill="#4361EE" opacity="0.7"/>
+  
+  <!-- Lock icon -->
+  <circle cx="256" cy="240" r="40" fill="#4CC9F0"/>
+  <rect x="240" y="240" width="32" height="56" rx="16" fill="#4CC9F0"/>
+  <circle cx="256" cy="240" r="16" fill="#16213E"/>
+</svg>
