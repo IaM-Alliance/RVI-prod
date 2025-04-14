@@ -282,6 +282,21 @@ def csp_report():
         logger.error(f"Error processing CSP report: {str(e)}")
         return jsonify({'status': 'error'}), 500
 
+@app.route('/service-worker.js')
+def service_worker():
+    """Serve the service worker from the root, which is required for PWA functionality"""
+    return app.send_static_file('js/service-worker.js')
+
+@app.route('/offline')
+def offline():
+    """Serve the offline page when the user is offline"""
+    return render_template('offline.html')
+        
+@app.route('/manifest.json')
+def manifest():
+    """Serve the manifest file from the root for PWA functionality"""
+    return app.send_static_file('manifest.json')
+
 @app.route('/')
 def index():
     if not current_user.is_authenticated:

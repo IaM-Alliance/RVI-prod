@@ -1,0 +1,48 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=iam_alliance
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: always
+    networks:
+      - app-network
+
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:5000 --workers 3 main:app
+    volumes:
+      - .:/app
+      - ./uploads:/app/uploads
+    ports:
+      - "5000:5000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/iam_alliance
+      - SESSION_SECRET=${SESSION_SECRET:-default_secret_key_for_development}
+      - MATRIX_ADMIN_TOKEN=${MATRIX_ADMIN_TOKEN:-}
+      - SMTP_RELAY_SERVER=${SMTP_RELAY_SERVER:-}
+      - MAILJET_API_KEY=${MAILJET_API_KEY:-}
+      - MAILJET_SECRET_KEY=${MAILJET_SECRET_KEY:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: always
+    networks:
+      - app-network
+
+volumes:
+  postgres_data:
+
+networks:
+  app-network:
+    driver: bridge
