@@ -18,5 +18,8 @@ dependencies = [
     "requests>=2.32.3",
     "sendgrid>=6.11.0",
     "flask-limiter>=3.12",
-    "dotenv>0.9.8",
+    "pillow>=11.2.1",
+    "python-dotenv>=1.1.0",
+    "svglib>=1.5.1",
+    "reportlab>=4.3.1",
 ]
