@@ -1,0 +1,24 @@
+80,9,2025-04-13 03:22:33.244174,system_reset,System reset for production deployment,system
+81,9,2025-04-13 04:28:53.610686,login,User logged in from IP: 35.202.5.198,35.202.5.198
+82,9,2025-04-13 04:29:14.991385,password_change,User changed their password,35.238.235.161
+83,9,2025-04-13 05:09:01.949786,login,User logged in from IP: 34.72.101.37,34.72.101.37
+84,9,2025-04-13 05:11:52.19954,user_created,Created new user: shaun-adm with role: server_admin,34.68.1.153
+85,11,2025-04-13 05:19:36.581465,login,User logged in from IP: 35.238.235.161,35.238.235.161
+86,11,2025-04-13 05:19:52.713655,password_change,User changed their password,35.202.5.198
+87,9,2025-04-13 05:38:25.393344,vetting_form_submitted,Vetting form for Shaun-test (iam-alliance.fencing267@passmail.net) submitted,34.44.94.57
+88,9,2025-04-13 05:39:00.454816,vetting_form_approved,Vetting form for Shaun-test was approved (awaiting token),34.44.94.57
+89,9,2025-04-13 05:39:44.466233,token_generation_failed,Failed to generate token with Matrix API: API Bearer Token not configured,34.68.1.153
+90,9,2025-04-13 06:15:06.384053,token_generated_from_form,"Generated Matrix token for approved form: Shaun-test (iam-alliance.fencing267@passmail.net), assigned username: shaun-test",34.46.100.90
+91,9,2025-04-13 06:17:38.203667,user_created,Created new user: emmy-srvadm with role: server_admin,35.202.5.198
+92,9,2025-04-13 06:23:22.247584,vetting_form_draft,Vetting form for badpersontest (badperson@test.zyx) saved as draft,34.46.100.90
+93,9,2025-04-13 06:23:46.259478,vetting_form_updated,Vetting form for badpersontest (badperson@test.zyx) updated with 1 new evidence file(s),34.46.100.90
+94,9,2025-04-13 06:24:03.861578,vetting_form_updated,Vetting form for badpersontest (badperson@test.zyx) updated,34.44.94.57
+95,9,2025-04-13 06:25:27.987592,vetting_form_rejectd,Vetting form for badpersontest was rejected with 1 evidence file(s),34.44.94.57
+96,9,2025-04-13 06:27:27.654613,vetting_form_draft,Vetting form for goodtest (good-test@yes.utf) saved as draft with 1 evidence file(s),34.30.141.1
+97,9,2025-04-13 06:27:35.512076,vetting_form_updated,Vetting form for goodtest (good-test@yes.utf) updated,34.72.101.37
+98,9,2025-04-13 06:28:55.69086,vetting_form_approved,Vetting form for goodtest was approved (awaiting token) with 1 evidence file(s),35.193.50.36
+99,9,2025-04-13 06:33:04.230881,token_generated_from_form,"Generated Matrix token for approved form: goodtest (good-test@yes.utf), assigned username: goodtest",34.44.94.57
+100,11,2025-04-13 12:20:26.429175,login,User logged in from IP: 35.202.5.198,35.202.5.198
+101,11,2025-04-13 12:21:43.399843,logout,User logged out from IP: 35.202.5.198,35.202.5.198
+102,9,2025-04-13 12:21:52.841363,login,User logged in from IP: 35.202.5.198,35.202.5.198
+103,9,2025-04-13 12:22:46.202853,user_created,Created new user: jess-adm with role: server_admin,35.202.5.198
