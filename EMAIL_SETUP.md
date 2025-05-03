@@ -16,18 +16,20 @@ The application is configured to use the following SMTP2GO settings:
 
 ## Required Environment Variables
 
-To enable email functionality, you must set the following environment variable:
+To enable email functionality, you must set the following environment variables:
 
 ```
+SMTP_RELAY_USER=your_smtp_username
 SMTP_RELAY_AUTHPW=your_smtp_password
 ```
 
-This can be added to your `.env` file or set in your deployment environment.
+These can be added to your `.env` file or set in your deployment environment.
 
 ## SMTP2GO Authentication
 
-1. The sender email address (support@rvi.iam-alliance.com) is used as the username for SMTP authentication
-2. The password is stored in the SMTP_RELAY_AUTHPW environment variable
+1. By default, the username for SMTP authentication is the sender email address (support@rvi.iam-alliance.com)
+2. To use a different username, set it in the SMTP_RELAY_USER environment variable
+3. The password is stored in the SMTP_RELAY_AUTHPW environment variable
 
 ## Testing Email Functionality
 

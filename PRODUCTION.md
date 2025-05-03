@@ -81,6 +81,7 @@ The following improvements have been made to make the application production-rea
      MATRIX_ADMIN_TOKEN=<your_matrix_token>
      
      # Email configuration (SMTP2GO relay)
+     SMTP_RELAY_USER=<your_smtp_username>
      SMTP_RELAY_AUTHPW=<your_smtp_password>
      ```
    - Set permissions on the `.env` file to be restricted: `chmod 600 .env`

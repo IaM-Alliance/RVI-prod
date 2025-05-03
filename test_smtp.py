@@ -6,7 +6,8 @@ Usage:
   python test_smtp.py recipient@example.com
 
 Environment variables required:
-  SMTP_RELAY_AUTHPW
+  SMTP_RELAY_USER (optional, defaults to support@rvi.iam-alliance.com)
+  SMTP_RELAY_AUTHPW (required)
 """
 
 import os
@@ -22,12 +23,17 @@ if __name__ == "__main__":
     recipient = sys.argv[1]
     
     # Check environment variables
+    smtp_username = os.environ.get("SMTP_RELAY_USER")
     smtp_password = os.environ.get("SMTP_RELAY_AUTHPW")
     
     if not smtp_password:
         print("Error: SMTP password not found in environment variables.")
         print("Please set SMTP_RELAY_AUTHPW.")
         sys.exit(1)
+        
+    if not smtp_username:
+        print("Note: SMTP_RELAY_USER not set, using default sender email as username.")
+        print("To use a different username, set the SMTP_RELAY_USER environment variable.")
     
     print(f"Sending test email to {recipient}...")
     
