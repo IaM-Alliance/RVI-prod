@@ -45,8 +45,8 @@ if __name__ == "__main__":
 This is a test email to verify that the SMTP2GO integration is working correctly.
 
 The system is configured to use:
-- SMTP server: mail.smtp2go.com
-- Primary port: 2525 (with fallbacks: 8025, 587, 80)
+- SMTP server: in-v3.mailjet.com
+- Primary port: 587
 - TLS: Enabled
 - Sender: IaMA RVI Support <support@rvi.iam-alliance.com>
 

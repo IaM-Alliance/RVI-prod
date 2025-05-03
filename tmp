@@ -1,0 +1,7 @@
+INSERT INTO rviuser (username, email, password_hash, role, created_at, needs_password_change, created_by, status, approved_by, approved_at)
+VALUES ('jess-adm', 'brown.jessica@gmail.com', 'pbkdf2:sha256:260000$3yrMNHQFsCn5HUjf$b0bbce08d0c0fea13150f8a953044e7b65fd6b0fd4cebc23fe133b34ce4c54b3', 'server_admin', NOW(), FALSE,'Superadmin SNC', 'Superadmin SNC', NOW(), 'active');
+
+
+EeQueivoacho4egoiThaeceX
+
+
