@@ -3,7 +3,8 @@ from app import db
 from flask_login import UserMixin
 import json
 
-class User(UserMixin, db.Model):
+class RVIUser(UserMixin, db.Model):
+    __tablename__ = 'rviuser'
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(64), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
@@ -12,11 +13,11 @@ class User(UserMixin, db.Model):
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     last_login = db.Column(db.DateTime)
     needs_password_change = db.Column(db.Boolean, default=True)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('rviuser.id'))
     
     # User approval fields
     status = db.Column(db.String(20), nullable=False, default='active')  # active, pending, rejected
-    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    approved_by = db.Column(db.Integer, db.ForeignKey('rviuser.id'))
     approved_at = db.Column(db.DateTime)
     approval_notes = db.Column(db.Text)
     
@@ -58,7 +59,7 @@ class User(UserMixin, db.Model):
 
 class UserPreferences(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), unique=True, nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('rviuser.id'), unique=True, nullable=False)
     theme = db.Column(db.String(20), default='dark')  # dark, light
     token_colors = db.Column(db.Text, default=json.dumps({
         'available': 'bg-info',
@@ -127,7 +128,7 @@ class UserPreferences(db.Model):
 
 class AuditLog(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('rviuser.id'), nullable=False)
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
     action = db.Column(db.String(50), nullable=False)  # login, logout, token_generated, etc.
     details = db.Column(db.Text)
@@ -140,7 +141,7 @@ class MatrixToken(db.Model):
     user_email = db.Column(db.String(120), nullable=False)
     assigned_username = db.Column(db.String(120), nullable=False)  # Required username assigned to the user
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    created_by = db.Column(db.Integer, db.ForeignKey('rviuser.id'), nullable=False)
     status = db.Column(db.String(20), default='pending')  # pending, submitted, failed
     response_data = db.Column(db.Text)  # To store API response JSON
     response_timestamp = db.Column(db.DateTime, nullable=True)  # When API response was received
@@ -164,7 +165,7 @@ class VettingEvidence(db.Model):
 
 class VettingForm(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('rviuser.id'), nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
     status = db.Column(db.String(20), default='draft')  # draft, submitted, approved, rejected, awaiting_token
@@ -190,11 +191,11 @@ class VettingForm(db.Model):
     additional_info = db.Column(db.Text, nullable=True)
     
     # Approval information
-    approved_by = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=True)
+    approved_by = db.Column(db.Integer, db.ForeignKey('rviuser.id'), nullable=True)
     approved_at = db.Column(db.DateTime, nullable=True)
     
     # Relationships
-    approver = db.relationship('User', 
+    approver = db.relationship('RVIUser', 
                              foreign_keys=[approved_by], 
                              backref=db.backref('approved_forms', lazy=True))
     matrix_tokens = db.relationship('MatrixToken', backref='vetting_form', lazy=True)
