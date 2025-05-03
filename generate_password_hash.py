@@ -11,8 +11,8 @@ from werkzeug.security import generate_password_hash
 def main():
     parser = argparse.ArgumentParser(description='Generate a password hash for database use')
     parser.add_argument('password', nargs='?', help='Password to hash (if not provided, you will be prompted)')
-    parser.add_argument('--method', default='pbkdf2:sha256:260000', 
-                        help='Hashing method (default: pbkdf2:sha256:260000)')
+    parser.add_argument('--method', default='scrypt', 
+                        help='Hashing method (default: scrypt)')
     parser.add_argument('--salt-length', type=int, default=16, 
                         help='Salt length (default: 16)')
     parser.add_argument('--quiet', '-q', action='store_true', 
