@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """
 Script to generate password hashes for the RVI-Alliance Vetting System database.
-This script creates Werkzeug password hashes compatible with the application.
+This script creates Werkzeug password hashes using the scrypt method (default in Flask)
+that are compatible with the application's authentication system.
 """
 
 import sys
