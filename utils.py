@@ -31,7 +31,8 @@ def send_email(to_email, subject, body):
         smtp_host = "mail.smtp2go.com"  # Primary SMTP server
         primary_port = 2525  # Preferred TLS port
         fallback_ports = [8025, 587, 80]  # Fallback TLS ports
-        sender_email = "support@rvi.iam-alliance.com"  # Also used as username
+        sender_email = "support@rvi.iam-alliance.com"  # Default sender email
+        smtp_username = os.environ.get("SMTP_RELAY_USER", sender_email)  # Use env var or default to sender_email
         smtp_password = os.environ.get("SMTP_RELAY_AUTHPW")
         
         if not smtp_password:
@@ -59,8 +60,8 @@ def send_email(to_email, subject, body):
                     server.ehlo()
                     
                     # Authenticate with SMTP2GO
-                    logger.info("Authenticating with SMTP2GO")
-                    server.login(sender_email, smtp_password)
+                    logger.info(f"Authenticating with SMTP2GO using username: {smtp_username}")
+                    server.login(smtp_username, smtp_password)
                     
                     # Send the email
                     server.send_message(msg)
