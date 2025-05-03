@@ -2,7 +2,7 @@ from flask_wtf import FlaskForm
 from flask_wtf.file import FileField, FileAllowed, FileRequired
 from wtforms import StringField, PasswordField, SubmitField, SelectField, EmailField, TextAreaField, BooleanField, DateField, HiddenField, FieldList, FormField
 from wtforms.validators import DataRequired, Email, EqualTo, Length, ValidationError, Optional
-from models import User, UserPreferences
+from models import RVIUser as User, UserPreferences
 
 class LoginForm(FlaskForm):
     username = StringField('Username', validators=[DataRequired()])

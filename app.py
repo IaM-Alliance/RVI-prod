@@ -96,7 +96,7 @@ login_manager.login_view = 'login'
 login_manager.login_message_category = 'danger'
 
 # Import models after db initialization
-from models import User, AuditLog, MatrixToken, VettingForm, VettingEvidence, UserPreferences
+from models import RVIUser as User, AuditLog, MatrixToken, VettingForm, VettingEvidence, UserPreferences
 
 # Add secure headers to all responses
 @app.after_request
