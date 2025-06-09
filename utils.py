@@ -25,13 +25,13 @@ def generate_random_password(length=12):
     return ''.join(password)
 
 def send_email(to_email, subject, body):
-    """Send an email using mailjet relay server."""
+    """Send an email using zoho smtp server."""
     try:
-        # SMTP2GO configuration
-        smtp_host = "in-v3.mailjet.com"  # Primary SMTP server
+        # configuration
+        smtp_host = "smtp.zoho.com"  # Primary SMTP server
         primary_port = 587  # Preferred TLS port
         fallback_ports = [25]  # Fallback TLS ports
-        sender_email = "support@iam-alliance.com"  # Default sender email
+        sender_email = "admin@hq.iam-alliance.com"  # Default sender email
         smtp_username = os.environ.get("SMTP_RELAY_USER", sender_email)  # Use env var or default to sender_email
         smtp_password = os.environ.get("SMTP_RELAY_AUTHPW")
         
